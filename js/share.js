@@ -19,7 +19,7 @@ function openExport(scope) {
   modal(`<h3>Export</h3><div class="xgrid"><div class="xprev" id="xPrev"></div><div class="xopts" id="xOpts"></div></div>
 <p class="xinfo" id="xInfo"></p>
 <div class="mrow"><button class="btn" data-close>Cancel</button><button class="btn" id="xCopy" hidden></button><button class="btn pri" id="xGo">Download</button></div>`);
-  $('#mcard').classList.add('wide');
+  $('#mcard').classList.add('xl');
   xRender();
 }
 function xRender() {

@@ -138,7 +138,7 @@ function modal(html) {
 function closeModal() {
   $('#modal').hidden = true;
   $('#mcard').innerHTML = '';
-  $('#mcard').classList.remove('wide');
+  $('#mcard').classList.remove('xl');
 }
 $('#modal').addEventListener('click', e => {
   if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal();

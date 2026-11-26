@@ -1718,7 +1718,7 @@ body[data-route='share'] #titleBtn:hover {
     monospace;
   color: var(--muted);
 }
-.mcard.wide {
+.mcard.xl {
   width: min(780px, 100%);
 }
 .xgrid {
@@ -1866,5 +1866,19 @@ body[data-route='share'] :is(#tray, #panel, #sbar, #menuBtn, #tr, #status, #mini
     max-height: 100%;
     width: auto;
     height: auto;
+  }
+}
+
+/* ---------- phone polish ---------- */
+@media (max-width: 600px), (hover: none) {
+  #menu .mk,
+  #menu .mk2,
+  #ctx kbd {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  body.has-sel #titleBtn {
+    display: none;
   }
 }

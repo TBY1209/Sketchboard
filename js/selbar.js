@@ -109,7 +109,7 @@ $('#sbar').addEventListener('click', e => {
   if (a === 'del') {
     const n = S.length;
     del();
-    if (n > 1) toast('Deleted ' + n + ' items. Undo is top right.');
+    if (n > 1) toast('Deleted ' + n + ' items', { label: 'Undo', run: undo });
   } else if (a === 'dup') dup();
   else if (a === 'edit') {
     const id = [...sel][0];
