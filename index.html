@@ -4,6 +4,30 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
     <title>Sketchboard</title>
+    <meta
+      name="description"
+      content="Whiteboards and diagrams that live on your device and work offline. Shapes, sticky notes, connectors, frames, images, templates."
+    />
+    <meta name="theme-color" content="#f8f5ee" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141319" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sketchboard" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sketchboard" />
+    <meta
+      property="og:description"
+      content="Whiteboards and diagrams that live on your device and work offline."
+    />
+    <meta property="og:url" content="https://tby1209.github.io/Sketchboard/" />
+    <meta property="og:image" content="https://tby1209.github.io/Sketchboard/icons/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="css/fonts.css" />
     <link rel="stylesheet" href="css/app.css" />
   </head>
@@ -375,6 +399,12 @@
           <path d="M12 4v16a8 8 0 000-16z" fill="currentColor" /></svg
         >Appearance<span class="chk" id="modeChk"></span>
       </button>
+      <button data-act="install">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="6" y="2.5" width="12" height="19" rx="3" />
+          <path d="M12 7v7M9 11l3 3 3-3M10.5 18.5h3" /></svg
+        >Install app
+      </button>
       <button data-act="keys">
         <svg class="ico" viewBox="0 0 24 24">
           <rect x="3" y="6" width="18" height="12" rx="2" />
@@ -422,6 +452,7 @@
     <script src="js/power.js"></script>
     <script src="js/palette.js"></script>
     <script src="js/share.js"></script>
+    <script src="js/pwa.js"></script>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>
   </body>

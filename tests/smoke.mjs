@@ -329,6 +329,50 @@ async function shareExport(browser) {
   await ctx.close();
 }
 
+async function offline(browser) {
+  console.log('offline / install');
+  const fs = require('fs'),
+    path = require('path'),
+    root = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
+  const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const pre = JSON.parse(swSrc.match(/const PRECACHE = (\[[\s\S]*?\]);/)[1].replace(/'/g, '"'));
+  const want = [
+    ...fs.readdirSync(path.join(root, 'js')).map(f => 'js/' + f),
+    ...fs.readdirSync(path.join(root, 'css')).map(f => 'css/' + f),
+    ...fs.readdirSync(path.join(root, 'fonts')).filter(f => f.endsWith('.woff2')).map(f => 'fonts/' + f)
+  ];
+  const missing = want.filter(f => !pre.includes(f)),
+    stale = pre.filter(f => f !== './' && !fs.existsSync(path.join(root, f)));
+  ok(!missing.length, 'sw.js precaches every app file' + (missing.length ? ': missing ' + missing.join(', ') : ''));
+  ok(!stale.length, 'sw.js lists no deleted files' + (stale.length ? ': ' + stale.join(', ') : ''));
+  const man = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
+  ok(man.icons.every(i => fs.existsSync(path.join(root, i.src))), 'manifest icons exist');
+
+  const { ctx, page, errors } = await fresh(browser, { viewport: { width: 1280, height: 800 } });
+  await page.goto(BASE);
+  await page.waitForSelector('#layer > [data-id]');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  ok(true, 'service worker installed and controlling the page');
+  await ctx.setOffline(true);
+  await page.reload();
+  await page.waitForSelector('#layer > [data-id]');
+  ok(await count(page) === 11, 'board loads with no network');
+  await page.evaluate(() => document.fonts.load('20px Kalam'));
+  ok(await page.evaluate(() => document.fonts.check('20px Kalam')), 'hand-drawn font available offline');
+  await page.click('#homeBtn');
+  await page.waitForSelector('#home .bcard');
+  ok(true, 'home screen works offline');
+  await ctx.setOffline(false);
+  // the manifest's "New board" shortcut
+  await page.goto(BASE + '#/new');
+  await page.waitForFunction(() => document.body.dataset.route === 'board' && els.length === 0);
+  ok((await page.textContent('#titleBtn')) === 'Untitled board', '#/new opens a fresh blank board');
+  ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await ctx.close();
+}
+
 async function phone(browser) {
   console.log('phone');
   const { ctx, page, errors } = await fresh(browser, { ...devices['iPhone 13'] });
@@ -349,6 +393,7 @@ try {
   await boards(browser);
   await power(browser);
   await shareExport(browser);
+  await offline(browser);
   await phone(browser);
 } finally {
   await browser.close();

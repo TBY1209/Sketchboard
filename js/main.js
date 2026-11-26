@@ -47,6 +47,10 @@ for (const k of document.querySelectorAll('.mk')) k.textContent = keyLabel('Mod+
 for (const k of document.querySelectorAll('.mk2')) k.textContent = keyLabel('Mod+Shift+E');
 $('#palBtn').title = 'Search and commands (' + keyLabel('Mod+K') + ')';
 setMini(miniOn);
+syncThemeColor();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () =>
+  requestAnimationFrame(syncThemeColor)
+);
 bootBoards();
 addEventListener('resize', () => render());
 const scrollOK = t => t && t.closest && t.closest('#panel,.mcard,#home,.pop');

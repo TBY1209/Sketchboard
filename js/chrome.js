@@ -53,6 +53,7 @@ function setMode(m, quiet) {
   } catch (_) {}
   const lbl = { auto: 'Match system', light: 'Light', dark: 'Dark' }[m];
   $('#themeBtn').innerHTML = `<svg class="ico" viewBox="0 0 24 24">${MODEI[m]}</svg>`;
+  if (typeof syncThemeColor === 'function') requestAnimationFrame(syncThemeColor);
   $('#themeBtn').title = 'Appearance: ' + lbl;
   $('#modeChk').textContent = lbl;
   if (!quiet) toast('Appearance: ' + lbl);

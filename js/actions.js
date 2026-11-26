@@ -352,4 +352,11 @@ action({
   when: () => els.length > 0,
   run: () => confirmClear()
 });
+action({
+  id: 'install',
+  label: 'Install app',
+  group: 'Help',
+  when: () => !isStandalone(),
+  run: () => installApp()
+});
 action({ id: 'keys', label: 'Shortcuts and tips', group: 'Help', keys: ['?'], run: () => help() });

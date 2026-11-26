@@ -208,6 +208,12 @@ async function doRoute() {
     if (board && route === 'board') await flush();
     return openShared(h.slice(3));
   }
+  if (h === '/new') {
+    if (board && route === 'board') await flush();
+    const t = templateById('blank'),
+      meta = await createBoard('Untitled board', [], t.id);
+    return go('#/b/' + meta.id, true);
+  }
   if (h === '/' || h === '/boards') {
     if (board && route === 'board') await flush();
     return showHome();

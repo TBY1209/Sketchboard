@@ -27,7 +27,7 @@ function closePalette() {
   $('#pal').hidden = true;
   $('#palIn').blur();
 }
-const HOME_OK = new Set(['newBoard', 'open', 'theme', 'keys']);
+const HOME_OK = new Set(['newBoard', 'open', 'theme', 'keys', 'install']);
 function palSource() {
   const out = [];
   for (const a of ACTIONS) {
