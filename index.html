@@ -4,11 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
     <title>Sketchboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Kalam:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&family=Nunito:ital,wght@0,400;0,800;1,400&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="css/fonts.css" />
     <link rel="stylesheet" href="css/app.css" />
   </head>
   <body data-route="boot">
@@ -313,21 +309,23 @@
         >Insert image
       </button>
       <hr />
-      <button data-act="png">
-        <svg class="ico" viewBox="0 0 24 24">
-          <rect x="4" y="5" width="16" height="14" rx="2" />
-          <path d="M4 16l5-5 4 4 2-2 5 5" /></svg
-        >Export image (PNG)
+      <button data-act="exportDlg">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 14v6h14v-6" /></svg>Export…<kbd
+          class="mk2"
+        ></kbd>
       </button>
-      <button data-act="svg">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Export vector
-        (SVG)
+      <button data-act="share">
+        <svg class="ico" viewBox="0 0 24 24">
+          <path
+            d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"
+          /></svg
+        >Share view-only link…
       </button>
       <button data-act="json">
         <svg class="ico" viewBox="0 0 24 24">
           <path d="M6 3.5h8l4 4v13H6z" />
           <path d="M14 3.5v4h4" /></svg
-        >Save board file
+        >Download board file
       </button>
       <button data-act="open">
         <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg>Import board file
@@ -392,6 +390,10 @@
 
     <div class="bar" id="sbar" hidden role="toolbar" aria-label="Selection"></div>
     <aside id="panel" aria-label="Style"></aside>
+    <div id="shareBar" role="region" aria-label="Shared board">
+      <span><b>View-only copy</b> — pan and zoom to look around</span>
+      <button class="btn pri" id="saveCopy">Save a copy to my boards</button>
+    </div>
     <div id="toast" role="status"></div>
     <div id="modal" hidden><div class="mcard" id="mcard"></div></div>
     <input type="color" id="cpick" tabindex="-1" aria-hidden="true" />
@@ -419,6 +421,7 @@
     <script src="js/home.js"></script>
     <script src="js/power.js"></script>
     <script src="js/palette.js"></script>
+    <script src="js/share.js"></script>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>
   </body>

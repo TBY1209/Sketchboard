@@ -112,63 +112,178 @@ async function deliver(name, data, fallback) {
     fallback();
   }
 }
-async function exportPNG() {
-  if (!els.length) return toast('Nothing on the board yet');
+/* ---------- export engine: works on any list of elements ---------- */
+const BGS = { paper: '#f8f5ee', white: '#ffffff', none: null };
+function exportList(scope) {
+  if (scope === 'sel' && sel.size) return [...moveSet().keys()].map(byId).filter(Boolean);
+  if (scope && scope.startsWith('frame:')) {
+    const f = byId(scope.slice(6));
+    if (f) return [f, ...frameKids(f)];
+  }
+  return els;
+}
+function exportBox(list, pad = 40) {
+  const b = unionB(list) || { x: 0, y: 0, w: 1, h: 1 };
+  return { x: b.x - pad, y: b.y - pad, w: b.w + pad * 2, h: b.h + pad * 2 };
+}
+const pngScale = (box, scale) =>
+  Math.max(0.1, Math.min(scale, 8192 / Math.max(box.w, box.h), Math.sqrt(40e6 / (box.w * box.h))));
+async function renderCanvas(list, { scale = 2, bg = '#ffffff' } = {}) {
   try {
     await document.fonts.ready;
   } catch (_) {}
-  await ensureImages(els);
-  const b = unionB(els),
-    pad = 40,
-    W = b.w + pad * 2,
-    H = b.h + pad * 2,
-    sc = Math.min(2, 8000 / Math.max(W, H)),
+  await ensureImages(list);
+  const B = exportBox(list),
+    sc = pngScale(B, scale),
     c = document.createElement('canvas');
-  c.width = Math.ceil(W * sc);
-  c.height = Math.ceil(H * sc);
+  c.width = Math.ceil(B.w * sc);
+  c.height = Math.ceil(B.h * sc);
   const x = c.getContext('2d');
   x.scale(sc, sc);
-  x.fillStyle = '#fff';
-  x.fillRect(0, 0, W, H);
-  x.translate(pad - b.x, pad - b.y);
-  for (const e of drawOrder(els)) drawEl(x, e);
-  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-  deliver(fileBase() + '.png', blob, () =>
-    modal(
-      `<h3>Your board as an image</h3><p>Long-press or right-click the picture to save it.</p><img alt="Exported board" src="${c.toDataURL('image/png')}"><div class="mrow"><button class="btn pri" data-close>Done</button></div>`
-    )
-  );
+  if (bg) {
+    x.fillStyle = bg;
+    x.fillRect(0, 0, B.w, B.h);
+  }
+  x.translate(-B.x, -B.y);
+  for (const e of drawOrder(list)) drawEl(x, e);
+  return c;
 }
-function svgString() {
-  const b = unionB(els),
-    pad = 40,
-    W = r1(b.w + pad * 2),
-    H = r1(b.h + pad * 2);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${r1(b.x - pad)} ${r1(b.y - pad)} ${W} ${H}"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Figtree&amp;family=Kalam&amp;family=JetBrains+Mono&amp;display=swap');</style><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".16"/></filter></defs><rect x="${r1(b.x - pad)}" y="${r1(b.y - pad)}" width="${W}" height="${H}" fill="#fff"/>${drawOrder(
-    els
-  )
+const canvasBlob = c => new Promise(r => c.toBlob(r, 'image/png'));
+
+/* fonts embedded into SVG exports so text looks right anywhere (only families actually used) */
+const FAMILY = {
+  hand: 'Kalam',
+  sans: 'Figtree',
+  serif: 'Lora',
+  mono: 'JetBrains Mono',
+  marker: 'Permanent Marker',
+  round: 'Nunito'
+};
+let fontFaceList = null;
+const fontData = {};
+async function fontFaces() {
+  if (fontFaceList) return fontFaceList;
+  try {
+    const t = await (await fetch('css/fonts.css')).text();
+    fontFaceList = [...t.matchAll(/@font-face \{([^}]*)\}/g)].map(m => {
+      const b = m[1];
+      return {
+        fam: /font-family: '([^']+)'/.exec(b)[1],
+        style: /font-style: (\w+)/.exec(b)[1],
+        wt: /font-weight: ([\d ]+);/.exec(b)[1].trim(),
+        url: /url\(([^)]+)\)/.exec(b)[1].replace('../', ''),
+        ur: (/unicode-range: ([^;]+);/.exec(b) || [])[1] || '',
+        ext: /latin-ext\.woff2/.test(b)
+      };
+    });
+  } catch (_) {
+    fontFaceList = [];
+  }
+  return fontFaceList;
+}
+async function embeddedFontCSS(list) {
+  const fams = new Set();
+  let ext = false;
+  for (const e of list) {
+    if (e.t === 'frame') fams.add('Figtree');
+    else if (e.text) {
+      fams.add(FAMILY[e.font]);
+      if (/[^\u0000-\u00ff\u2000-\u206f]/.test(e.text)) ext = true;
+    }
+  }
+  if (!fams.size) return '';
+  const faces = (await fontFaces()).filter(f => fams.has(f.fam) && (!f.ext || ext));
+  for (const f of faces)
+    if (!fontData[f.url])
+      try {
+        fontData[f.url] = await blobToDataURL(await (await fetch(f.url)).blob());
+      } catch (_) {}
+  return faces
+    .filter(f => fontData[f.url])
+    .map(
+      f =>
+        `@font-face{font-family:'${f.fam}';font-style:${f.style};font-weight:${f.wt};src:url(${fontData[f.url]}) format('woff2');${f.ur ? `unicode-range:${f.ur};` : ''}}`
+    )
+    .join('');
+}
+async function svgFor(list, { bg = '#ffffff', fonts = true } = {}) {
+  const B = exportBox(list);
+  exportImgs = await imageFiles(list);
+  const css = fonts ? await embeddedFontCSS(list) : '';
+  const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${r1(B.w)}" height="${r1(B.h)}" viewBox="${r1(B.x)} ${r1(B.y)} ${r1(B.w)} ${r1(B.h)}"><defs>${css ? `<style>${css}</style>` : ''}<filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".16"/></filter></defs>${
+    bg ? `<rect x="${r1(B.x)}" y="${r1(B.y)}" width="${r1(B.w)}" height="${r1(B.h)}" fill="${bg}"/>` : ''
+  }${drawOrder(list)
     .map(e => elSVG(e, true))
     .join('')}</svg>`;
-}
-async function exportSVG() {
-  if (!els.length) return toast('Nothing on the board yet');
-  exportImgs = await imageFiles(els);
-  const s = svgString();
   exportImgs = {};
-  deliver(fileBase() + '.svg', s, () =>
-    modal(
-      `<h3>SVG code</h3><p>Copy this into a .svg file or straight into Figma.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`
-    )
+  return s;
+}
+
+/* quick exports (menu / palette): whole board, white background, 2x */
+async function exportPNG(scope) {
+  const list = exportList(scope);
+  if (!list.length) return toast('Nothing on the board yet');
+  deliver(
+    fileBase() + '.png',
+    await canvasBlob(await renderCanvas(list, { scale: 2, bg: BGS.white })),
+    () => {}
   );
 }
+async function exportSVG(scope) {
+  const list = exportList(scope);
+  if (!list.length) return toast('Nothing on the board yet');
+  deliver(fileBase() + '.svg', await svgFor(list, { bg: BGS.white }), () => {});
+}
+async function copyPNG(scope) {
+  const list = exportList(scope || (sel.size ? 'sel' : 'board'));
+  if (!list.length) return toast('Nothing to copy');
+  const blob = renderCanvas(list, { scale: 2, bg: BGS.white }).then(canvasBlob);
+  try {
+    if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write)
+      throw new Error('no clipboard');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    toast('Image copied — paste it anywhere');
+  } catch (_) {
+    deliver(fileBase() + '.png', await blob, () => {});
+    toast('This browser can’t copy images, so it was downloaded instead');
+  }
+}
+
+/* PDF via the browser's print dialog: one page per frame, or the whole thing on one page */
+async function printPDF(pages) {
+  const box = document.createElement('div');
+  box.id = 'print';
+  let wide = 0;
+  for (const list of pages) {
+    const B = exportBox(list);
+    if (B.w > B.h) wide++;
+    const sec = document.createElement('section');
+    sec.className = 'ppage';
+    sec.innerHTML = await svgFor(list, { bg: null, fonts: false });
+    box.append(sec);
+  }
+  const st = document.createElement('style');
+  st.textContent = `@page{size:${wide * 2 >= pages.length ? 'landscape' : 'portrait'};margin:12mm}`;
+  box.append(st);
+  document.body.append(box);
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const done = () => {
+    box.remove();
+    removeEventListener('afterprint', done);
+  };
+  addEventListener('afterprint', done);
+  window.print();
+  setTimeout(() => box.isConnected && matchMedia('print').matches === false && done(), 1000);
+}
+
 async function boardFile(name, list) {
   const files = await imageFiles(list),
     d = { sketchboard: 1, name, els: list };
   if (Object.keys(files).length) d.files = files;
   return JSON.stringify(d);
 }
-async function exportJSON() {
-  const s = await boardFile(board ? board.name : 'Board', els);
+async function exportJSON(scope) {
+  const s = await boardFile(board ? board.name : 'Board', exportList(scope));
   deliver(fileBase() + '.json', s, () =>
     modal(
       `<h3>Board file</h3><p>Copy this and keep it somewhere safe. Open board file reads it back.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`

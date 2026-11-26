@@ -2,9 +2,6 @@
    Routes:  #/          home (all boards)
             #/b/<id>    a board
             #/s/<data>  a shared read-only snapshot (see share.js) */
-let board = null; // metadata of the open board: {id, name, created, updated, thumb, template, cam, count}
-let route = 'boot';
-let readOnly = false;
 const LAST_KEY = LS + '.last';
 
 const newId = () => uid() + uid().slice(0, 4);
@@ -114,6 +111,7 @@ async function openBoard(id) {
     return go('#/', true);
   }
   resetBoardState();
+  if (readOnly || tool === 'hand') setTool('select');
   readOnly = false;
   board = meta;
   els = loadEls(doc ? doc.els : []);

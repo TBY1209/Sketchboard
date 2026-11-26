@@ -268,6 +268,67 @@ async function power(browser) {
   await ctx.close();
 }
 
+async function shareExport(browser) {
+  console.log('share & export');
+  const { ctx, page, errors } = await fresh(browser, { viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+  await page.goto(BASE);
+  await page.waitForSelector('#layer > [data-id]');
+  await page.evaluate(() => newBoard('kanban'));
+  await page.waitForFunction(() => document.body.dataset.route === 'board' && els.some(e => e.t === 'frame'));
+  const n = await page.evaluate(() => els.length);
+
+  // export dialog → SVG with embedded fonts
+  await page.keyboard.press('Control+Shift+E');
+  ok(await page.isVisible('#xPrev svg'), 'Ctrl+Shift+E opens the export dialog with a preview');
+  if (SHOTS) await page.screenshot({ path: SHOTS + '/export.png' });
+  await page.click('[data-xk="fmt"] [data-v="svg"]');
+  let [dl] = await Promise.all([page.waitForEvent('download'), page.click('#xGo')]);
+  ok(dl.suggestedFilename() === 'Kanban.svg', 'SVG download named after the board');
+  const svgText = require('fs').readFileSync(await dl.path(), 'utf8');
+  ok(svgText.startsWith('<svg') && svgText.includes('@font-face') && svgText.includes("font-family:'Kalam'"), 'SVG embeds the fonts it uses');
+
+  // frame-scoped PNG
+  await page.keyboard.press('Control+Shift+E');
+  await page.click('[data-xk="fmt"] [data-v="png"]');
+  await page.click('[data-xk="scope"] [data-v="frame"]');
+  ok(await page.isVisible('#xFrame'), 'frame scope shows a frame picker');
+  [dl] = await Promise.all([page.waitForEvent('download'), page.click('#xGo')]);
+  ok(dl.suggestedFilename().endsWith('.png'), 'PNG download');
+
+  // copy as image
+  await page.evaluate(() => copyPNG());
+  await page.waitForTimeout(500);
+  const types = await page.evaluate(async () => (await navigator.clipboard.read()).flatMap(i => i.types));
+  ok(types.includes('image/png'), 'Copy as image puts a PNG on the clipboard');
+
+  // PDF: one page per frame (+ one for things outside frames)
+  await page.evaluate(() => { window.__printed = 0; window.print = () => { window.__printed = document.querySelectorAll('#print .ppage').length; }; });
+  await page.evaluate(() => runAction('print'));
+  await page.click('#xGo');
+  await page.waitForFunction(() => window.__printed > 0);
+  ok(await page.evaluate(() => window.__printed) === 4, 'PDF has a page per frame plus the loose heading');
+
+  // share link round trip
+  await page.evaluate(() => { sel.clear(); render(); return openShare(); });
+  const url = await page.inputValue('#shareUrl');
+  ok(url.includes('#/s/z'), 'share link is compressed into the URL');
+  const v = await ctx.newPage();
+  v.on('pageerror', e => errors.push(e.message));
+  await v.goto(url);
+  await v.waitForFunction(() => document.body.dataset.route === 'share');
+  ok(await v.evaluate(() => els.length) === n, 'shared view shows every element');
+  ok(await v.isVisible('#shareBar') && !(await v.isVisible('#tray')), 'shared view is read-only (no tools)');
+  if (SHOTS) await v.screenshot({ path: SHOTS + '/shared.png' });
+  await v.click('#saveCopy');
+  await v.waitForFunction(() => document.body.dataset.route === 'board');
+  ok(await v.evaluate(n => els.length === n && board.name === 'Kanban', n), 'Save a copy creates an editable board');
+  ok(await v.evaluate(() => Store.listBoards().then(l => l.length)) === 3, 'copy listed with the other boards');
+
+  ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await ctx.close();
+}
+
 async function phone(browser) {
   console.log('phone');
   const { ctx, page, errors } = await fresh(browser, { ...devices['iPhone 13'] });
@@ -287,6 +348,7 @@ try {
   await desktop(browser);
   await boards(browser);
   await power(browser);
+  await shareExport(browser);
   await phone(browser);
 } finally {
   await browser.close();

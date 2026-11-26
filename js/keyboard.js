@@ -14,6 +14,14 @@ addEventListener('keydown', e => {
     return;
   }
   if (isField(e.target)) return;
+  if (route === 'share') {
+    const a = actionForKey(e, false) || actionForKey(e, true);
+    if (a && a.group === 'View') {
+      e.preventDefault();
+      a.run();
+    }
+    return;
+  }
   if (route !== 'board') {
     if (e.key === '/' && route === 'home') {
       e.preventDefault();

@@ -88,10 +88,8 @@ function unlockIds(ids) {
   render();
 }
 const anyLocked = () => els.some(e => e.lk);
-let hoverLock = null;
 
 /* ---------- frames ---------- */
-const isFrame = e => !!e && e.t === 'frame';
 const FRAME_TITLE = { fs: 16, h: 30 };
 function frameTitleW(e) {
   mctx.font = `700 ${FRAME_TITLE.fs}px ${FONTS.sans}`;
@@ -116,8 +114,6 @@ function moveSet() {
       for (const k of frameKids(e)) if (!m.has(k.id)) m.set(k.id, JSON.parse(JSON.stringify(k)));
   return m;
 }
-/* frames first so they sit underneath everything else */
-const drawOrder = list => [...list.filter(isFrame), ...list.filter(e => !isFrame(e))];
 function framesList() {
   return els.filter(isFrame);
 }

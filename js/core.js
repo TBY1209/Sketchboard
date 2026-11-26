@@ -151,6 +151,13 @@ let lastPT = 'mouse',
   sbKey = '',
   sym = false;
 const ptrs = new Map();
+let route = 'boot', // 'boot' | 'home' | 'board' | 'share'
+  board = null, // metadata of the open board: {id, name, created, updated, thumb, template, cam, count}
+  readOnly = false,
+  hoverLock = null;
+const isFrame = e => !!e && e.t === 'frame';
+/* frames first so they sit underneath everything else */
+const drawOrder = list => [...list.filter(isFrame), ...list.filter(e => !isFrame(e))];
 const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s =>

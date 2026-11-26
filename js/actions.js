@@ -305,9 +305,45 @@ action({
   hidden: true,
   run: () => openPalette()
 });
+const hasEls = () => els.length > 0;
+action({
+  id: 'exportDlg',
+  label: 'Export…',
+  group: 'Board',
+  keys: ['Mod+Shift+E'],
+  when: hasEls,
+  run: () => openExport()
+});
+action({
+  id: 'exportSel',
+  label: 'Export selection…',
+  group: 'Board',
+  when: hasSel,
+  run: () => openExport('sel')
+});
+action({
+  id: 'copyPng',
+  label: 'Copy as image',
+  group: 'Board',
+  keys: ['Mod+Shift+C'],
+  when: hasEls,
+  run: () => copyPNG()
+});
+action({ id: 'share', label: 'Share view-only link…', group: 'Board', when: hasEls, run: () => openShare() });
+action({
+  id: 'print',
+  label: 'Print / save as PDF',
+  group: 'Board',
+  keys: ['Mod+P'],
+  when: hasEls,
+  run: () => {
+    XO.fmt = 'pdf';
+    openExport('board');
+  }
+});
 action({ id: 'png', label: 'Export image (PNG)', group: 'Board', run: () => exportPNG() });
 action({ id: 'svg', label: 'Export vector (SVG)', group: 'Board', run: () => exportSVG() });
-action({ id: 'json', label: 'Save board file', group: 'Board', run: () => exportJSON() });
+action({ id: 'json', label: 'Download board file', group: 'Board', run: () => exportJSON() });
 action({ id: 'open', label: 'Import board file', group: 'Board', run: () => $('#file').click() });
 action({
   id: 'clear',

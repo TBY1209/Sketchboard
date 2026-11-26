@@ -15,6 +15,7 @@ function cancelOp() {
 svg.addEventListener('mousedown', e => e.preventDefault());
 svg.addEventListener('pointerdown', e => {
   e.preventDefault();
+  if (route !== 'board' && route !== 'share') return;
   if (editing) commitEdit();
   closePops();
   if (e.button === 2) return; // right-click: the context menu handles it
@@ -198,6 +199,7 @@ svg.addEventListener('pointerdown', e => {
   }
 });
 function pMove(e) {
+  if (route !== 'board' && route !== 'share') return;
   if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   const p = toW(e);
   lastW = p;
