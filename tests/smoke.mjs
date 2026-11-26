@@ -56,6 +56,21 @@ async function desktop(browser) {
   await page.waitForSelector('#layer > [data-id]');
   ok(await count(page) === n0 + 1, 'board persists across reload');
 
+  // keyboard shortcuts via the action registry
+  await page.mouse.click(340, 730);
+  await page.keyboard.press('Control+d');
+  ok(await count(page) === n0 + 2, 'Ctrl+D duplicates');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('g');
+  ok(await page.$eval('#stage', s => s.classList.contains('nogrid')), 'G toggles the grid');
+  await page.keyboard.press('g');
+  await page.keyboard.press('Shift+?');
+  ok(await page.isVisible('#modal .keys'), '? opens shortcuts help');
+  await page.keyboard.press('Escape');
+  await page.click('#menuBtn');
+  await page.click('#menu [data-act="all"]');
+  ok(await page.$eval('#sbar .cnt', n => n.textContent.startsWith(String(13))), 'menu Select all selects everything');
+
   ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
   await ctx.close();
 }
