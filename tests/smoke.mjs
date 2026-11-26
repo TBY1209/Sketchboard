@@ -373,6 +373,67 @@ async function offline(browser) {
   await ctx.close();
 }
 
+async function defaults(browser) {
+  console.log('default shape styles');
+  const { ctx, page, errors } = await fresh(browser, { viewport: { width: 1440, height: 900 } });
+  await page.goto(BASE);
+  await page.waitForSelector('#layer > [data-id]');
+  await page.evaluate(() => newBoard('blank'));
+  await page.waitForFunction(() => document.body.dataset.route === 'board' && els.length === 0);
+  await page.evaluate(() => document.fonts.ready);
+
+  // create every shape type with its tool and compare with the built-in table
+  const types = await page.evaluate(() => Object.keys(TYPE_DEFAULTS));
+  const made = {};
+  for (const [i, t] of types.entries()) {
+    await page.evaluate(t => setTool(t), t);
+    await page.mouse.click(420 + (i % 5) * 190, 170 + Math.floor(i / 5) * 230); // clear of the style panel on the left
+    made[t] = await page.evaluate(() => {
+      const e = els[els.length - 1];
+      return { t: e.t, fill: e.fill, fs: e.fs };
+    });
+    await page.keyboard.press('Escape'); // finishes text editing (empty text boxes are discarded)
+  }
+  const bad = await page.evaluate(m => Object.entries(m).filter(([t, e]) => e.t !== t || e.fill !== TYPE_DEFAULTS[t].fill || e.fs !== TYPE_DEFAULTS[t].fs).map(([t]) => t), made);
+  ok(!bad.length, `all ${types.length} shape types get their built-in fill and font size` + (bad.length ? ': wrong ' + bad.join(', ') : ''));
+  ok(made.rect.fill === '#d0ebff' && made.rect.fs === 20, 'rectangle: blue, 20px');
+  ok(made.ellipse.fill === '#fff3a6' && made.diamond.fill === '#e5dbff' && made.diamond.fs === 18, 'ellipse yellow; diamond purple, 18px');
+  ok(made.star.fs === 14 && made.text.fs === 24 && made.sticky.fs === 18, 'star 14px, text 24px, sticky 18px');
+
+  // a short label fits every default-sized shape without the shape growing (the star's text area is only 32x30)
+  const grow = await page.evaluate(() =>
+    Object.keys(TYPE_DEFAULTS)
+      .filter(t => t !== 'text')
+      .filter(t => {
+        const [w, h] = SIZE[t] || [160, 100];
+        const e = mk(t, 0, 0, w, h, true);
+        e.text = t === 'star' ? 'Idea' : 'Two words';
+        fitText(e);
+        return e.h !== h;
+      })
+  );
+  ok(!grow.length, 'short labels fit every default shape' + (grow.length ? ': ' + grow.join(', ') : ''));
+
+  // restyling one type is remembered for that type only
+  await page.evaluate(() => { sel = new Set([els.find(e => e.t === 'rect').id]); apply('fill', '#ffc9c9'); stepFs(1); });
+  const after = await page.evaluate(() => ({
+    rect: defFor('rect'),
+    ellipse: defFor('ellipse'),
+    newRect: mk('rect', 0, 0, 10, 10)
+  }));
+  ok(after.rect.fill === '#ffc9c9' && after.rect.fs === 24, 'restyled rectangle: next rectangle follows (pink, 24px)');
+  ok(after.newRect.fill === '#ffc9c9' && after.newRect.fs === 24, 'mk() uses the remembered style');
+  ok(after.ellipse.fill === '#fff3a6' && after.ellipse.fs === 20, 'other shape types keep their built-in look');
+  const pure = await page.evaluate(() => {
+    const e = sample().find(e => e.t === 'round');
+    return { fs: e.fs, ctrl: TEMPLATES.find(t => t.id === 'swot').build()[1].fs };
+  });
+  ok(pure.fs === 20 && pure.ctrl === 20, 'templates and the sample board ignore your recent restyling');
+
+  ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await ctx.close();
+}
+
 async function phone(browser) {
   console.log('phone');
   const { ctx, page, errors } = await fresh(browser, { ...devices['iPhone 13'] });
@@ -394,6 +455,7 @@ try {
   await power(browser);
   await shareExport(browser);
   await offline(browser);
+  await defaults(browser);
   await phone(browser);
 } finally {
   await browser.close();

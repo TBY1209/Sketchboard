@@ -355,10 +355,13 @@ function applyRaw(k, val) {
     }
     if (k === 'stroke' && val === 'transparent' && (e.t === 'line' || e.t === 'pen')) continue;
     e[k] = val;
+    if ((k === 'fill' || k === 'fs') && rememberStyle(e, k, val)) {
+      /* later shapes of this type follow; other types keep their own look */
+    } else if (k === 'fs' && e.t === 'line') def.fs = val;
     if (k === 'route') e.k = 0.5;
     if (['fs', 'font', 't', 'bold', 'it'].includes(k)) fitText(e);
   }
-  if (k !== 't' && selEls().some(e => e.t !== 'frame' && e.t !== 'img')) def[k] = val;
+  if (!['t', 'fill', 'fs'].includes(k) && selEls().some(e => e.t !== 'frame' && e.t !== 'img')) def[k] = val;
 }
 function apply(k, val) {
   begin();
@@ -373,7 +376,7 @@ function stepFs(dir) {
     const f = e.fs;
     let n = dir > 0 ? FSTEPS.find(x => x > f + 0.01) : [...FSTEPS].reverse().find(x => x < f - 0.01);
     e.fs = n || f;
-    def.fs = e.fs;
+    if (!rememberStyle(e, 'fs', e.fs) && e.t === 'line') def.fs = e.fs;
     fitText(e);
   }
   end();

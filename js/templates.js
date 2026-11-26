@@ -1,8 +1,8 @@
 /* Starter templates for new boards. Each build() returns a fresh element array. */
 const T_ = (t, x, y, w, h, text, fill, o = {}) =>
-  Object.assign(mk(t, x, y, w, h), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
+  Object.assign(mk(t, x, y, w, h, true), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
 const TL_ = (a, b, o = {}) =>
-  Object.assign(mkLine({ id: a.id, x: 0, y: 0 }, { id: b.id, x: 0, y: 0 }), { fs: 16 }, o);
+  Object.assign(mkLine({ id: a.id, x: 0, y: 0 }, { id: b.id, x: 0, y: 0 }, true), { fs: 16 }, o);
 const head_ = (x, y, w, text, o = {}) =>
   T_(
     'text',
