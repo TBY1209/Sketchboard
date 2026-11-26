@@ -20,7 +20,7 @@ const zoomC = k => {
   zoomAt(r.left + r.width / 2, r.top + r.height / 2, k);
 };
 function fit() {
-  const b = unionB(els),
+  const b = unionB(visible(els)),
     v = view();
   if (!b) {
     cam = { x: v.w / 2, y: v.h / 2, z: 1 };

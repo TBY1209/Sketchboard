@@ -23,6 +23,19 @@ for (const scheme of ['light', 'dark']) {
   await settle(p);
   await shot(p, `board-${scheme}`);
   if (scheme === 'light') {
+    // a mind map with one branch folded away
+    const id = await p.evaluate(async () => (await Store.listBoards()).find(b => b.name === 'Mind map').id);
+    await p.evaluate(id => go('#/b/' + id), id);
+    await p.waitForFunction(
+      () => document.body.dataset.route === 'board' && board && board.name === 'Mind map'
+    );
+    await p.evaluate(() => {
+      sel.clear();
+      toggleCollapse(els.find(e => e.text === 'Why it matters').id);
+    });
+    await settle(p);
+    await shot(p, 'mindmap');
+    await p.evaluate(() => go('#/b/' + (board && board.id)));
     await p.keyboard.press('Control+k');
     await p.keyboard.type('frame');
     await settle(p);

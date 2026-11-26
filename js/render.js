@@ -81,7 +81,8 @@ function render() {
     cancelAnimationFrame(rsRaf);
     rsRaf = 0;
   }
-  layer.innerHTML = drawOrder(els)
+  computeMind();
+  layer.innerHTML = drawOrder(visible(els))
     .map(e => elSVG(e))
     .join('');
   world.setAttribute('transform', `translate(${r1(cam.x)} ${r1(cam.y)}) scale(${cam.z})`);
@@ -190,6 +191,6 @@ function renderUI() {
   }
   if (op && op.k === 'pen')
     s += `<path d="${rawD(op.raw)}" fill="none" opacity="${def.op}" style="stroke:${col(def.stroke)};stroke-width:${def.sw}px" stroke-linecap="round" stroke-linejoin="round"/>`;
-  ui.innerHTML = s;
+  ui.innerHTML = s + mindButtons();
   sbarUpdate();
 }

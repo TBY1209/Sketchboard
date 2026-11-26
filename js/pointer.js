@@ -41,6 +41,12 @@ svg.addEventListener('pointerdown', e => {
     lastPT = e.pointerType;
     renderUI();
   }
+  const clb = e.button !== 2 && e.target.closest && e.target.closest('[data-cl]');
+  if (clb) {
+    lastTap = { t: 0 };
+    toggleCollapse(clb.dataset.cl);
+    return;
+  }
   if (e.button === 1 || spaceDown || tool === 'hand') {
     op = { k: 'pan', sx: e.clientX, sy: e.clientY, cam: { ...cam } };
     svg.classList.add('pan');
@@ -208,7 +214,10 @@ function pMove(e) {
       const t = e.target.closest('[data-id]');
       let h = null,
         lk = null;
-      if (t && (tool === 'select' || tool === 'line')) {
+      const cl = e.target.closest('[data-cl]');
+      if (cl)
+        h = cl.dataset.cl; // keep the node (and its collapse button) lit while the mouse is on the button
+      else if (t && (tool === 'select' || tool === 'line')) {
         const el = byId(t.dataset.id);
         if (el && el.lk) lk = el.id;
         else if (tool === 'select' || isShape(el)) h = t.dataset.id;
@@ -286,7 +295,7 @@ function pMove(e) {
     const r = rectFrom(op.start, p);
     sel = new Set(op.base);
     for (const el of els) {
-      if (el.lk) continue;
+      if (el.lk || HIDDEN.has(el.id)) continue;
       const b = bounds(el);
       // frames only when fully inside the box, so you can box-select things within a frame
       if (
@@ -375,6 +384,9 @@ function pUp(e) {
       const n = JSON.parse(JSON.stringify(src));
       n.id = uid();
       n.text = '';
+      delete n.mm; // a branch is never a second root
+      delete n.cl;
+      styleMindChild(n, src);
       const c = ctr(src),
         G2 = Math.max(90, Math.min(src.w, src.h) * 0.8);
       let cx, cy;

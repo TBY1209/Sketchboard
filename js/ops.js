@@ -7,7 +7,7 @@ function smart(bb, dx, dy) {
   const X = [0, bb.w / 2, bb.w].map(o => bb.x + dx + o),
     Y = [0, bb.h / 2, bb.h].map(o => bb.y + dy + o);
   for (const e of els) {
-    if (sel.has(e.id) || e.t === 'line') continue;
+    if (sel.has(e.id) || e.t === 'line' || HIDDEN.has(e.id)) continue;
     const o = bounds(e),
       OX = [o.x, o.x + o.w / 2, o.x + o.w],
       OY = [o.y, o.y + o.h / 2, o.y + o.h];
@@ -47,7 +47,7 @@ function symPt(p, skip) {
   let bx = null,
     by = null;
   for (const e of els) {
-    if (skip.has(e.id) || e.t === 'line') continue;
+    if (skip.has(e.id) || e.t === 'line' || HIDDEN.has(e.id)) continue;
     const o = bounds(e);
     for (const v of [o.x, o.x + o.w / 2, o.x + o.w]) {
       const d = v - p.x;
@@ -70,7 +70,7 @@ function smartSym(bb, dx, dy) {
     ny = bb.y + dy,
     O = [];
   for (const e of els) {
-    if (sel.has(e.id) || e.t === 'line') continue;
+    if (sel.has(e.id) || e.t === 'line' || HIDDEN.has(e.id)) continue;
     const o = bounds(e);
     O.push({ x: o.x, y: o.y, w: o.w, h: o.h, sh: isShape(e) });
   }
@@ -292,6 +292,10 @@ function del() {
   if (!sel.size) return;
   begin();
   const gone = new Set(sel);
+  for (const id of [...sel]) {
+    const e = byId(id);
+    if (e && e.cl && MIND.has(id)) for (const d of below(id)) gone.add(d); // no invisible leftovers
+  }
   for (const l of els)
     if (l.t === 'line' && !gone.has(l.id)) {
       const ids = ['a', 'b'].map(k => l[k].id).filter(Boolean);
@@ -353,6 +357,8 @@ const copyList = () =>
         c.b.x = g.pb.x;
         c.b.y = g.pb.y;
       }
+      // a copied collapsed branch has no parent in the copy, so it becomes its own (still collapsed) mind map
+      if (e.cl && MIND.has(e.id)) c.mm = true;
       return c;
     });
 function dup() {

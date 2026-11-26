@@ -114,13 +114,15 @@ async function deliver(name, data, fallback) {
 }
 /* ---------- export engine: works on any list of elements ---------- */
 const BGS = { paper: '#f8f5ee', white: '#ffffff', none: null };
-function exportList(scope) {
-  if (scope === 'sel' && sel.size) return [...moveSet().keys()].map(byId).filter(Boolean);
-  if (scope && scope.startsWith('frame:')) {
+/* `full` keeps collapsed branches (board files, share links); otherwise you get what you see */
+function exportList(scope, full) {
+  let list = els;
+  if (scope === 'sel' && sel.size) list = [...moveSet().keys()].map(byId).filter(Boolean);
+  else if (scope && scope.startsWith('frame:')) {
     const f = byId(scope.slice(6));
-    if (f) return [f, ...frameKids(f)];
+    if (f) list = [f, ...frameKids(f)];
   }
-  return els;
+  return full ? list : visible(list);
 }
 function exportBox(list, pad = 40) {
   const b = unionB(list) || { x: 0, y: 0, w: 1, h: 1 };
@@ -283,7 +285,7 @@ async function boardFile(name, list) {
   return JSON.stringify(d);
 }
 async function exportJSON(scope) {
-  const s = await boardFile(board ? board.name : 'Board', exportList(scope));
+  const s = await boardFile(board ? board.name : 'Board', exportList(scope, true));
   deliver(fileBase() + '.json', s, () =>
     modal(
       `<h3>Board file</h3><p>Copy this and keep it somewhere safe. Open board file reads it back.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`

@@ -112,6 +112,10 @@ function moveSet() {
   for (const e of selEls())
     if (isFrame(e))
       for (const k of frameKids(e)) if (!m.has(k.id)) m.set(k.id, JSON.parse(JSON.stringify(k)));
+  // a collapsed branch travels with its node, so expanding it later finds everything in place
+  for (const e of selEls())
+    if (e.cl && MIND.has(e.id))
+      for (const k of branchElements(e.id)) if (!m.has(k.id)) m.set(k.id, JSON.parse(JSON.stringify(k)));
   return m;
 }
 function framesList() {
@@ -371,6 +375,16 @@ function openCtx(cx, cy, kind, lockedId) {
         : ctxRow('group', null, { icon: ICON.group })) +
       ctxRow('lockSel', null, { icon: ICON.lock }) +
       ctxRow('zoomSel', null, { icon: ICON.zoomSel }) +
+      (mindEligible(oneSel())
+        ? ctxRow('mindRoot', oneSel().mm ? 'Remove mind map root' : 'Make mind map root', {
+            icon: ICON.mindmap
+          })
+        : '') +
+      (canCollapse()
+        ? ctxRow('collapse', oneSel().cl ? 'Expand branch' : 'Collapse branch', {
+            icon: oneSel().cl ? ICON.expand : ICON.collapse
+          })
+        : '') +
       (ACT.copyPng
         ? sep +
           ctxRow('copyPng', null, { icon: ICON.image }) +
@@ -564,7 +578,7 @@ function renderMini() {
     H = 132,
     v = view(),
     vw = { x: -cam.x / cam.z, y: -cam.y / cam.z, w: v.w / cam.z, h: v.h / cam.z };
-  const b = unionB(els) || vw,
+  const b = unionB(visible(els)) || vw,
     x0 = Math.min(b.x, vw.x),
     y0 = Math.min(b.y, vw.y),
     x1 = Math.max(b.x + b.w, vw.x + vw.w),
@@ -576,7 +590,7 @@ function renderMini() {
   const R = (x, y, w, h) =>
     `x="${r1(x * s + ox)}" y="${r1(y * s + oy)}" width="${r1(Math.max(1, w * s))}" height="${r1(Math.max(1, h * s))}"`;
   let out = '';
-  for (const e of drawOrder(els)) {
+  for (const e of drawOrder(visible(els))) {
     if (e.t === 'line') {
       const g = lineGeo(e);
       out += `<line x1="${r1(g.pa.x * s + ox)}" y1="${r1(g.pa.y * s + oy)}" x2="${r1(g.pb.x * s + ox)}" y2="${r1(g.pb.y * s + oy)}" class="ml"/>`;

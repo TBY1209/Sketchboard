@@ -184,7 +184,8 @@ const ptrs = new Map();
 let route = 'boot', // 'boot' | 'home' | 'board' | 'share'
   board = null, // metadata of the open board: {id, name, created, updated, thumb, template, cam, count}
   readOnly = false,
-  hoverLock = null;
+  hoverLock = null,
+  HIDDEN = new Set(); // ids hidden inside collapsed mind-map branches (see mindmap.js)
 const isFrame = e => !!e && e.t === 'frame';
 /* frames first so they sit underneath everything else */
 const drawOrder = list => [...list.filter(isFrame), ...list.filter(e => !isFrame(e))];
