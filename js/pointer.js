@@ -17,6 +17,7 @@ svg.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (editing) commitEdit();
   closePops();
+  if (e.button === 2) return; // right-click: the context menu handles it
   try {
     svg.setPointerCapture(e.pointerId);
   } catch (_) {}
@@ -48,6 +49,11 @@ svg.addEventListener('pointerdown', e => {
   const tEl = e.target.closest('[data-id]');
   let tid = tEl ? tEl.dataset.id : null;
   if (tid && !byId(tid)) tid = null;
+  let lockedId = null;
+  if (tid && byId(tid).lk) {
+    lockedId = tid;
+    tid = null;
+  }
   const now = performance.now();
   if (
     tool === 'select' &&
@@ -57,6 +63,7 @@ svg.addEventListener('pointerdown', e => {
     (lastTap.id === tid || e.pointerType !== 'mouse')
   ) {
     lastTap = { t: 0 };
+    if (lockedId) return;
     if (tid) {
       startEdit(tid);
       openPanel('text');
@@ -96,26 +103,44 @@ svg.addEventListener('pointerdown', e => {
     if (tid) {
       const sh = e.shiftKey || multi,
         was = sel.size === 1 && sel.has(tid);
+      const ids = e.ctrlKey || e.metaKey ? [tid] : groupOf(tid);
       if (sh) {
         if (sel.has(tid)) {
-          sel.delete(tid);
+          for (const i of ids) sel.delete(i);
           render();
           return;
         }
-        sel.add(tid);
-      } else if (!sel.has(tid)) sel = new Set([tid]);
+        for (const i of ids) sel.add(i);
+      } else if (!sel.has(tid)) sel = new Set(ids);
       begin();
       if (e.altKey) cloneIn(copyList(), 0, 0);
       op = {
         k: 'move',
         start: p,
-        orig: snapSel(),
+        orig: moveSet(),
         bb: selBounds(),
         moved: false,
         touch: e.pointerType !== 'mouse',
         tapEdit: was && e.pointerType !== 'mouse' && !sh,
         id: tid
       };
+      if (e.pointerType !== 'mouse') {
+        // long-press opens the context menu
+        const o = op,
+          cx = e.clientX,
+          cy = e.clientY;
+        o.lp = setTimeout(() => {
+          if (op !== o || o.moved) return;
+          op = null;
+          end();
+          window._lpT = performance.now();
+          try {
+            navigator.vibrate && navigator.vibrate(12);
+          } catch (_) {}
+          render();
+          openCtx(cx, cy, 'sel');
+        }, 520);
+      }
       render();
       return;
     }
@@ -124,6 +149,12 @@ svg.addEventListener('pointerdown', e => {
       const o = { k: 'tpan', sx: e.clientX, sy: e.clientY, cam: { ...cam }, moved: false };
       o.t = setTimeout(() => {
         if (op === o && !o.moved) {
+          if (lockedId) {
+            op = null;
+            window._lpT = performance.now();
+            openCtx(o.sx, o.sy, 'locked', lockedId);
+            return;
+          }
           op = { k: 'marquee', start: p, cur: p, base: new Set() };
           try {
             navigator.vibrate && navigator.vibrate(12);
@@ -140,7 +171,7 @@ svg.addEventListener('pointerdown', e => {
     render();
     return;
   }
-  if (SHAPES.includes(tool) || tool === 'sticky' || tool === 'text') {
+  if (SHAPES.includes(tool) || tool === 'sticky' || tool === 'text' || tool === 'frame') {
     begin();
     const q = sym ? symPt(p, new Set()) : snapP(p),
       n = mk(tool, q.x, q.y, 0, 0);
@@ -173,13 +204,16 @@ function pMove(e) {
   if (!op) {
     if (e.pointerType === 'mouse') {
       const t = e.target.closest('[data-id]');
-      let h = null;
+      let h = null,
+        lk = null;
       if (t && (tool === 'select' || tool === 'line')) {
         const el = byId(t.dataset.id);
-        if (tool === 'select' || isShape(el)) h = t.dataset.id;
+        if (el && el.lk) lk = el.id;
+        else if (tool === 'select' || isShape(el)) h = t.dataset.id;
       }
-      if (h !== hoverId) {
+      if (h !== hoverId || lk !== hoverLock) {
         hoverId = h;
+        hoverLock = lk;
         renderUI();
       }
     }
@@ -221,6 +255,7 @@ function pMove(e) {
       dy = p.y - op.start.y;
     if (!op.moved && Math.hypot(dx, dy) * cam.z < (op.touch ? 7 : 3)) return;
     op.moved = true;
+    clearTimeout(op.lp);
     hoverId = null;
     if (sym) [dx, dy] = smartSym(op.bb, dx, dy);
     else if (snap) {
@@ -248,7 +283,16 @@ function pMove(e) {
     op.cur = p;
     const r = rectFrom(op.start, p);
     sel = new Set(op.base);
-    for (const el of els) if (hit(bounds(el), r)) sel.add(el.id);
+    for (const el of els) {
+      if (el.lk) continue;
+      const b = bounds(el);
+      // frames only when fully inside the box, so you can box-select things within a frame
+      if (
+        isFrame(el) ? b.x >= r.x && b.y >= r.y && b.x + b.w <= r.x + r.w && b.y + b.h <= r.y + r.h : hit(b, r)
+      )
+        sel.add(el.id);
+    }
+    expandGroups(sel);
     renderSoon();
     return;
   }
@@ -307,9 +351,11 @@ function pUp(e) {
   }
   const k = op.k,
     o = op;
+  clearTimeout(o.lp);
   op = null;
   guides = [];
   hoverId = null;
+  if ((k === 'move' && !o.moved && !o.tapEdit) || k === 'marquee') setTimeout(avoidPanel, 40);
   if (k === 'move' && o.tapEdit && !o.moved) {
     end();
     const el = byId(o.id);
@@ -372,6 +418,19 @@ function pUp(e) {
       n.h = h;
       n.x = snapV(o.start.x - w / 2);
       n.y = snapV(o.start.y - h / 2);
+    }
+    if (n.t === 'frame') {
+      els = [n, ...els.filter(x => x !== n)];
+      if (!dragged) {
+        const v = view();
+        const fit2 = Math.min(1, (v.w * 0.7) / cam.z / n.w, (v.h * 0.6) / cam.z / n.h);
+        if (fit2 < 1) {
+          n.w = Math.round(n.w * fit2);
+          n.h = Math.round(n.h * fit2);
+          n.x = snapV(o.start.x - n.w / 2);
+          n.y = snapV(o.start.y - n.h / 2);
+        }
+      }
     }
     if (!lock) setTool('select');
     end();
@@ -479,12 +538,12 @@ document.addEventListener('touchend', touchesDone, true);
 document.addEventListener('touchcancel', touchesDone, true);
 svg.addEventListener('pointercancel', pUp);
 svg.addEventListener('pointerleave', e => {
-  if (!op && hoverId) {
+  if (!op && (hoverId || hoverLock)) {
     hoverId = null;
+    hoverLock = null;
     renderUI();
   }
 });
-svg.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('contextmenu', e => {
   if (!e.target.closest('#edin,textarea,input')) e.preventDefault();
 });

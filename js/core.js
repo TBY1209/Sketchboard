@@ -77,10 +77,13 @@ const NAMES = {
   cyl: 'Database',
   arrowR: 'Block arrow',
   speech: 'Speech bubble',
-  sticky: 'Sticky note'
+  sticky: 'Sticky note',
+  frame: 'Frame',
+  img: 'Image'
 };
-const TYPES = new Set([...SHAPES, 'sticky', 'text', 'pen', 'line']);
+const TYPES = new Set([...SHAPES, 'sticky', 'text', 'pen', 'line', 'frame', 'img']);
 const SIZE = {
+  frame: [480, 320],
   sticky: [200, 200],
   text: [220, 50],
   diamond: [180, 120],
@@ -158,7 +161,7 @@ const esc = s =>
 const r1 = n => Math.round(n * 10) / 10,
   f = p => r1(p.x) + ' ' + r1(p.y);
 const byId = id => (id ? els.find(e => e.id === id) : null);
-const isShape = e => !!e && e.t !== 'line' && e.t !== 'pen';
+const isShape = e => !!e && e.t !== 'line' && e.t !== 'pen' && e.t !== 'frame';
 const col = (c, x) => (c === 'ink' ? (x ? '#1e1e1e' : 'var(--ink)') : c);
 const tcol = (e, x) => {
   const ink = x ? '#1e1e1e' : 'var(--ink)';

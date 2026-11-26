@@ -120,6 +120,12 @@ const connSecs = L => {
     )
   );
 };
+function arrangeSec() {
+  return sec(
+    'Arrange',
+    `<div class="row"><button data-a="front" title="Bring to front (])" aria-label="Bring to front">${ic('front')}</button><button data-a="back" title="Send to back ([)" aria-label="Send to back">${ic('back')}</button><button data-a="dup" title="Duplicate (Ctrl+D)" aria-label="Duplicate">${ic('dup')}</button><button data-a="del" class="danger" title="Delete" aria-label="Delete">${ic('del')}</button></div>`
+  );
+}
 function panel() {
   const S = selEls(),
     P = $('#panel');
@@ -158,13 +164,33 @@ function panel() {
     document.body.classList.remove('panel-open');
     return;
   }
+  if (S.every(e => e.t === 'frame' || e.t === 'img')) {
+    const fr = S.filter(e => e.t === 'frame');
+    let h = `<button class="pclose" data-a="close" aria-label="Close style menu" title="Close">×</button>`;
+    if (fr.length) h += sec('Frame colour', swatchC('fill', FILLS, fr[0].fill));
+    h += sec(
+      'Opacity',
+      seg(
+        'op',
+        [
+          [1, '100%'],
+          [0.75, '75%'],
+          [0.5, '50%'],
+          [0.25, '25%']
+        ],
+        S[0].op
+      )
+    );
+    P.innerHTML = h + arrangeSec();
+    return;
+  }
   const shapes = S.filter(e => SHAPES.includes(e.t) || e.t === 'sticky'),
-    fillable = S.filter(e => e.t !== 'line' && e.t !== 'pen' && e.t !== 'text'),
+    fillable = S.filter(e => e.t !== 'line' && e.t !== 'pen' && e.t !== 'text' && e.t !== 'img'),
     lines = S.filter(e => e.t === 'line'),
-    texty = S.filter(e => e.t !== 'pen'),
+    texty = S.filter(e => e.t !== 'pen' && e.t !== 'frame' && e.t !== 'img'),
     onlyText = S.every(e => e.t === 'text'),
     rounded = S.filter(e => ['rect', 'round', 'sticky'].includes(e.t)),
-    boxes = S.filter(e => e.t !== 'line' && e.t !== 'pen');
+    boxes = S.filter(e => e.t !== 'line' && e.t !== 'pen' && e.t !== 'frame' && e.t !== 'img');
   let tab = pTab;
   if (onlyText) tab = 'text';
   if (!texty.length) tab = 'shape';
@@ -301,14 +327,13 @@ function panel() {
     );
     h += sec('Text colour', swatchC('tc', TCOLS, v('tc', T)));
   }
-  h += sec(
-    'Arrange',
-    `<div class="row"><button data-a="front" title="Bring to front (])" aria-label="Bring to front">${ic('front')}</button><button data-a="back" title="Send to back ([)" aria-label="Send to back">${ic('back')}</button><button data-a="dup" title="Duplicate (Ctrl+D)" aria-label="Duplicate">${ic('dup')}</button><button data-a="del" class="danger" title="Delete" aria-label="Delete">${ic('del')}</button></div>`
-  );
+  h += arrangeSec();
   P.innerHTML = h;
 }
 function applyRaw(k, val) {
   for (const e of selEls()) {
+    if (e.t === 'frame' && k !== 'fill' && k !== 'op') continue;
+    if (e.t === 'img' && k !== 'op') continue;
     if (k === 'fill' && (e.t === 'line' || e.t === 'pen' || e.t === 'text')) continue;
     if ((k === 'route' || k === 'head' || k === 'hk') && e.t !== 'line') continue;
     if (['font', 'fs', 'tc', 'bold', 'it', 'ta', 'va'].includes(k) && e.t === 'pen') continue;
@@ -333,7 +358,7 @@ function applyRaw(k, val) {
     if (k === 'route') e.k = 0.5;
     if (['fs', 'font', 't', 'bold', 'it'].includes(k)) fitText(e);
   }
-  if (k !== 't') def[k] = val;
+  if (k !== 't' && selEls().some(e => e.t !== 'frame' && e.t !== 'img')) def[k] = val;
 }
 function apply(k, val) {
   begin();

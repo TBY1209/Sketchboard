@@ -3,9 +3,12 @@ function edStyle() {
   const e = byId(editing);
   if (!e) return;
   let box;
+  const fr = e.t === 'frame';
   if (e.t === 'line') {
     const g = lineGeo(e);
     box = { x: g.mid.x - 120, y: g.mid.y - 40, w: 240, h: 80 };
+  } else if (fr) {
+    box = { x: e.x + 4, y: e.y - FRAME_TITLE.h - 4, w: Math.max(e.w, 240), h: FRAME_TITLE.h };
   } else {
     const b = tbox(e);
     box = { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h };
@@ -16,7 +19,8 @@ function edStyle() {
     top: box.y * cam.z + cam.y + 'px',
     width: box.w * cam.z + 'px',
     height: box.h * cam.z + 'px',
-    alignItems: e.t === 'line' || e.va === 'middle' ? 'center' : e.va === 'top' ? 'flex-start' : 'flex-end'
+    alignItems:
+      fr || e.t === 'line' || e.va === 'middle' ? 'center' : e.va === 'top' ? 'flex-start' : 'flex-end'
   });
   const rf = e.fs * cam.z,
     k = rf < 16 ? rf / 16 : 1;
@@ -33,10 +37,17 @@ function edStyle() {
     color: tcol(e),
     textAlign: e.t === 'line' ? 'center' : e.ta
   });
+  if (fr)
+    Object.assign(edIn.style, {
+      textAlign: 'left',
+      color: 'var(--ink)',
+      fontFamily: FONTS.sans,
+      fontWeight: 700
+    });
 }
 function startEdit(id, initial) {
   const e = byId(id);
-  if (!e || e.t === 'pen') return;
+  if (!e || e.t === 'pen' || e.t === 'img') return;
   commitEdit();
   editing = id;
   sel = new Set([id]);
@@ -62,7 +73,13 @@ function commitEdit() {
   edIn.blur();
   if (e) {
     begin();
-    e.text = txt;
+    e.text =
+      e.t === 'frame'
+        ? txt
+            .replace(/\s*\n\s*/g, ' ')
+            .trim()
+            .slice(0, 120) || 'Frame'
+        : txt;
     if (e.t === 'text' && !txt.trim()) {
       els = els.filter(x => x !== e);
       sel.delete(id);

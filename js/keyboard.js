@@ -50,7 +50,7 @@ addEventListener('keydown', e => {
   // typing with one empty shape selected starts editing it
   if (sel.size === 1 && e.key.length === 1 && !e.altKey) {
     const el = byId([...sel][0]);
-    if (el && el.t !== 'pen' && !el.text) {
+    if (el && el.t !== 'pen' && el.t !== 'img' && !el.text) {
       e.preventDefault();
       startEdit(el.id, e.key);
       return;
@@ -84,17 +84,14 @@ document.addEventListener('cut', e => {
 });
 document.addEventListener('paste', e => {
   if (route !== 'board' || readOnly || editing || isField(e.target)) return;
-  const t = e.clipboardData.getData('text/plain') || '';
+  const files = [...(e.clipboardData.files || [])],
+    t = e.clipboardData.getData('text/plain') || '';
   e.preventDefault();
-  let data = null;
+  let isBoard = false;
   try {
-    const d = JSON.parse(t);
-    if (d && d.sketchboard) data = d.els;
+    isBoard = !!JSON.parse(t).sketchboard;
   } catch (_) {}
-  if (!data && !t && clip) data = JSON.parse(clip).els;
-  if (data) {
-    pasteEls(data);
-    return;
-  }
-  if (t.trim()) addText(t.trim(), lastW);
+  if (!isBoard && files.some(f => f.type.startsWith('image/'))) return addImageFiles(files, lastW);
+  if (!t && clip) return pasteEls(JSON.parse(clip).els);
+  pasteText(t);
 });

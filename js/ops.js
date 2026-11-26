@@ -311,10 +311,16 @@ function del() {
 }
 function cloneIn(list, dx, dy) {
   const map = new Map(list.map(e => [e.id, uid()])),
+    gmap = new Map(),
     out = [];
   for (const o of list) {
     const e = JSON.parse(JSON.stringify(o));
     e.id = map.get(o.id);
+    delete e.lk;
+    if (e.grp) {
+      if (!gmap.has(e.grp)) gmap.set(e.grp, uid());
+      e.grp = gmap.get(e.grp);
+    }
     if (e.t === 'line')
       for (const k of ['a', 'b']) {
         if (e[k].id && map.has(e[k].id)) e[k].id = map.get(e[k].id);
@@ -335,17 +341,20 @@ function cloneIn(list, dx, dy) {
   return out;
 }
 const copyList = () =>
-  selEls().map(e => {
-    const c = JSON.parse(JSON.stringify(e));
-    if (c.t === 'line') {
-      const g = lineGeo(e);
-      c.a.x = g.pa.x;
-      c.a.y = g.pa.y;
-      c.b.x = g.pb.x;
-      c.b.y = g.pb.y;
-    }
-    return c;
-  });
+  [...moveSet().keys()]
+    .map(byId)
+    .filter(Boolean)
+    .map(e => {
+      const c = JSON.parse(JSON.stringify(e));
+      if (c.t === 'line') {
+        const g = lineGeo(e);
+        c.a.x = g.pa.x;
+        c.a.y = g.pa.y;
+        c.b.x = g.pb.x;
+        c.b.y = g.pb.y;
+      }
+      return c;
+    });
 function dup() {
   if (!sel.size) return;
   begin();
@@ -364,20 +373,21 @@ function order(front) {
 }
 function nudge(dx, dy) {
   begin();
-  moveBy(snapSel(), dx, dy);
+  moveBy(moveSet(), dx, dy);
   end();
   render();
 }
-function pasteEls(list) {
+function pasteEls(list, at) {
   const L = loadEls(list);
   if (!L.length) return;
   begin();
   const b = unionB(L.filter(e => e.t !== 'line')) || unionB(L) || { x: 0, y: 0, w: 0, h: 0 };
   pasteN++;
   const v = view(),
-    cx = (v.w / 2 - cam.x) / cam.z,
-    cy = (v.h / 2 - cam.y) / cam.z;
-  cloneIn(L, cx - (b.x + b.w / 2) + (pasteN % 5) * 16, cy - (b.y + b.h / 2) + (pasteN % 5) * 16);
+    cx = at ? at.x : (v.w / 2 - cam.x) / cam.z,
+    cy = at ? at.y : (v.h / 2 - cam.y) / cam.z,
+    jig = at ? 0 : (pasteN % 5) * 16;
+  cloneIn(L, cx - (b.x + b.w / 2) + jig, cy - (b.y + b.h / 2) + jig);
   end();
   render();
 }
@@ -399,16 +409,19 @@ function addText(t, at) {
 function setTool(t) {
   tool = t;
   if (SHAPES.includes(t)) lastShape = t;
-  svg.dataset.tool = SHAPES.includes(t) ? 'shape' : t;
+  const shapeLike = SHAPES.includes(t) || t === 'frame';
+  svg.dataset.tool = shapeLike ? 'shape' : t;
   hoverId = null;
   for (const b of document.querySelectorAll('#tray [data-tool]'))
-    b.classList.toggle('on', b.dataset.tool === t || (b.dataset.tool === 'shape' && SHAPES.includes(t)));
-  $('#shapeBtn').innerHTML = shapeIcon(lastShape, 24) + '<span class="car"></span>';
+    b.classList.toggle('on', b.dataset.tool === t || (b.dataset.tool === 'shape' && shapeLike));
+  $('#shapeBtn').innerHTML = shapeIcon(t === 'frame' ? 'frame' : lastShape, 24) + '<span class="car"></span>';
   for (const b of document.querySelectorAll('#shapes button'))
-    b.classList.toggle('on', b.dataset.s === lastShape);
+    b.classList.toggle('on', b.dataset.s === (t === 'frame' ? 'frame' : lastShape));
   renderUI();
 }
 function shapeIcon(t, s = 22) {
+  if (t === 'frame')
+    return `<svg class="ico" viewBox="0 0 24 24" style="width:${s}px;height:${s}px"><path d="M7 3v18M17 3v18M3 7h18M3 17h18"/></svg>`;
   const e = { t, w: 18, h: t === 'star' ? 17 : t === 'cyl' || t === 'sticky' ? 17 : t === 'tri' ? 15 : 13 };
   const d = shapeD(e);
   return `<svg class="ico" viewBox="0 0 24 24" style="width:${s}px;height:${s}px"><path transform="translate(${(24 - e.w) / 2} ${(24 - e.h) / 2})" d="${d}"/>${t === 'cyl' ? `<path transform="translate(3 3.5)" d="${rimD(e)}"/>` : ''}</svg>`;

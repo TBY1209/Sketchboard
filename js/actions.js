@@ -94,7 +94,7 @@ action({
   keys: ['Mod+A'],
   run: () => {
     closePops();
-    sel = new Set(els.map(x => x.id));
+    sel = new Set(els.filter(x => !x.lk).map(x => x.id));
     render();
     toast(sel.size ? sel.size + ' selected' : 'Nothing on the board');
   }
@@ -104,7 +104,7 @@ action({
   label: 'Edit text',
   group: 'Edit',
   keys: ['Enter'],
-  when: () => sel.size === 1 && (byId([...sel][0]) || {}).t !== 'pen',
+  when: () => sel.size === 1 && !['pen', 'img'].includes((byId([...sel][0]) || {}).t),
   run: () => {
     startEdit([...sel][0]);
     openPanel('text');
@@ -125,7 +125,42 @@ action({
   }
 });
 
+action({ id: 'cut', label: 'Cut', group: 'Edit', hint: ['Mod+X'], when: hasSel, run: () => copySel(true) });
+action({
+  id: 'copy',
+  label: 'Copy',
+  group: 'Edit',
+  hint: ['Mod+C'],
+  when: hasSel,
+  run: () => copySel(false)
+});
+action({ id: 'paste', label: 'Paste', group: 'Edit', hint: ['Mod+V'], run: () => pasteFromMenu() });
+
 /* ---------- arrange ---------- */
+action({
+  id: 'group',
+  label: 'Group',
+  group: 'Arrange',
+  keys: ['Mod+G'],
+  when: () => sel.size > 1,
+  run: groupSel
+});
+action({
+  id: 'ungroup',
+  label: 'Ungroup',
+  group: 'Arrange',
+  keys: ['Mod+Shift+G'],
+  when: selHasGroup,
+  run: ungroupSel
+});
+action({ id: 'lockSel', label: 'Lock', group: 'Arrange', keys: ['Mod+Shift+L'], when: hasSel, run: lockSel });
+action({
+  id: 'unlockAll',
+  label: 'Unlock everything',
+  group: 'Arrange',
+  when: anyLocked,
+  run: () => unlockIds(els.filter(e => e.lk).map(e => e.id))
+});
 action({
   id: 'front',
   label: 'Bring to front',
@@ -166,6 +201,22 @@ action({ id: 'zoomOut', label: 'Zoom out', group: 'View', keys: ['Mod+-'], run: 
 action({ id: 'zoom100', label: 'Zoom to 100%', group: 'View', keys: ['Mod+0'], run: () => zoomC(1 / cam.z) });
 action({ id: 'fit', label: 'Zoom to fit', group: 'View', keys: ['Shift+1'], run: () => fit() });
 action({
+  id: 'zoomSel',
+  label: 'Zoom to selection',
+  group: 'View',
+  keys: ['Shift+2'],
+  when: hasSel,
+  run: zoomToSel
+});
+action({
+  id: 'minimap',
+  label: 'Show minimap',
+  group: 'View',
+  keys: ['N'],
+  toggle: () => miniOn,
+  run: () => setMini(!miniOn)
+});
+action({
   id: 'grid',
   label: 'Show dot grid',
   group: 'View',
@@ -190,7 +241,8 @@ for (const [id, label, key, t] of [
   ['tool-sticky', 'Sticky note', 'S', 'sticky'],
   ['tool-text', 'Text', 'T', 'text'],
   ['tool-line', 'Connector', 'A', 'line'],
-  ['tool-pen', 'Marker', 'P', 'pen']
+  ['tool-pen', 'Marker', 'P', 'pen'],
+  ['tool-frame', 'Frame', 'F', 'frame']
 ])
   action({ id, label, group: 'Tools', keys: id === 'tool-line' ? [key, 'L'] : [key], run: () => setTool(t) });
 action({
@@ -243,6 +295,15 @@ action({
       toast('Opened a copy');
     }
   }
+});
+action({ id: 'insertImage', label: 'Insert image', group: 'Board', run: () => $('#imgfile').click() });
+action({
+  id: 'palette',
+  label: 'Search and commands',
+  group: 'Help',
+  keys: ['Mod+K'],
+  hidden: true,
+  run: () => openPalette()
 });
 action({ id: 'png', label: 'Export image (PNG)', group: 'Board', run: () => exportPNG() });
 action({ id: 'svg', label: 'Export vector (SVG)', group: 'Board', run: () => exportSVG() });

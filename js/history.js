@@ -82,6 +82,12 @@ function clean(o) {
   e.va = ['top', 'middle', 'bottom'].includes(o.va) ? o.va : 'middle';
   e.rad = Math.min(999, Math.max(0, num(o.rad, o.t === 'round' ? 18 : o.t === 'sticky' ? 4 : 0)));
   e.sh = o.sh === undefined ? o.t === 'sticky' : !!o.sh;
+  if (okId(o.grp)) e.grp = o.grp;
+  if (o.lk === true) e.lk = true;
+  if (o.t === 'img') {
+    if (!okHash(o.src)) return null;
+    e.src = o.src;
+  }
   if (o.t === 'line') {
     const pt = p =>
       Object.assign(p && okId(p.id) ? { id: p.id } : {}, { x: num(p && p.x, 0), y: num(p && p.y, 0) });

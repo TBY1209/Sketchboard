@@ -160,6 +160,114 @@ async function boards(browser) {
   await m.ctx.close();
 }
 
+async function power(browser) {
+  console.log('power');
+  const { ctx, page, errors } = await fresh(browser, { viewport: { width: 1440, height: 900 } });
+  await page.goto(BASE);
+  await page.waitForSelector('#layer > [data-id]');
+  await page.evaluate(() => newBoard('blank'));
+  await page.waitForFunction(() => document.body.dataset.route === 'board' && els.length === 0);
+  const center = async id =>
+    page.$eval(`#layer > [data-id="${id}"]`, n => {
+      const r = n.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+  // two rectangles
+  for (const [x, y] of [[500, 400], [800, 400]]) {
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('r');
+    await page.mouse.click(x, y);
+  }
+  await page.keyboard.press('Escape');
+  const [a, b] = await page.evaluate(() => els.map(e => e.id));
+
+  // group
+  await page.evaluate(([a, b]) => { sel = new Set([a, b]); render(); }, [a, b]);
+  await page.keyboard.press('Control+g');
+  ok(await page.evaluate(() => els[0].grp && els[0].grp === els[1].grp), 'Ctrl+G groups');
+  await page.keyboard.press('Escape');
+  let p = await center(a);
+  await page.mouse.click(p.x, p.y);
+  ok(await page.evaluate(() => sel.size === 2), 'clicking one member selects the whole group');
+  await page.keyboard.press('Control+Shift+g');
+  ok(await page.evaluate(() => !els[0].grp && !els[1].grp), 'Ctrl+Shift+G ungroups');
+
+  // lock
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(500); // avoid a double-click
+  await page.mouse.click(p.x, p.y);
+  await page.keyboard.press('Control+Shift+l');
+  ok(await page.evaluate(id => byId(id).lk === true && sel.size === 0, a), 'Ctrl+Shift+L locks and deselects');
+  const x0 = await page.evaluate(id => byId(id).x, a);
+  await page.mouse.move(p.x, p.y); await page.mouse.down();
+  await page.mouse.move(p.x + 120, p.y + 60, { steps: 6 }); await page.mouse.up();
+  ok(await page.evaluate(([id, x0]) => byId(id).x === x0, [a, x0]), 'locked element ignores drag');
+  await page.mouse.click(p.x, p.y, { button: 'right' });
+  ok(await page.isVisible('#ctx [data-ctx="unlockOne"]'), 'right-click on locked shows Unlock');
+  await page.click('#ctx [data-ctx="unlockOne"]');
+  ok(await page.evaluate(id => !byId(id).lk, a), 'Unlock works');
+
+  // context menu on canvas
+  await page.mouse.click(700, 700, { button: 'right' });
+  ok(await page.isVisible('#ctx [data-ctx="addFrameHere"]'), 'right-click on canvas opens the canvas menu');
+  await page.keyboard.press('Escape');
+  ok(!(await page.isVisible('#ctx')), 'Esc closes the context menu');
+
+  // frames carry their contents
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('f');
+  await page.mouse.move(380, 300); await page.mouse.down();
+  await page.mouse.move(950, 560, { steps: 6 }); await page.mouse.up();
+  const fid = await page.evaluate(() => els.find(e => e.t === 'frame').id);
+  ok(await page.evaluate(() => els[0].t === 'frame'), 'frame tool creates a frame underneath everything');
+  const bx0 = await page.evaluate(id => byId(id).x, b);
+  const title = await page.$eval(`#layer > [data-id="${fid}"] text`, n => { const r = n.getBoundingClientRect(); return { x: r.x + 10, y: r.y + r.height / 2 }; });
+  await page.mouse.click(1300, 820);
+  await page.mouse.move(title.x, title.y); await page.mouse.down();
+  await page.mouse.move(title.x + 60, title.y + 40, { steps: 6 }); await page.mouse.up();
+  ok(await page.evaluate(([id, x]) => Math.abs(byId(id).x - x - 60 / cam.z) < 2, [b, bx0]), 'dragging a frame moves what is inside it');
+
+  // image paste
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 120; c.height = 80;
+    const x = c.getContext('2d'); x.fillStyle = '#e03131'; x.fillRect(0, 0, 120, 80);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    const dt = new DataTransfer(); dt.items.add(new File([blob], 'red.png', { type: 'image/png' }));
+    document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }));
+  });
+  await page.waitForFunction(() => els.some(e => e.t === 'img'), null, { timeout: 4000 });
+  await page.waitForSelector('#layer image');
+  ok(true, 'pasting an image adds it to the board');
+
+  // command palette
+  await page.keyboard.press('Control+k');
+  ok(await page.isVisible('#pal'), 'Ctrl+K opens the palette');
+  await page.keyboard.type('zoom to fit');
+  const top = await page.textContent('#palList .on .pl');
+  ok(top.startsWith('Zoom to fit'), 'palette fuzzy-matches (top: ' + top + ')');
+  await page.keyboard.press('Enter');
+  ok(!(await page.isVisible('#pal')), 'Enter runs and closes');
+
+  // minimap + zoom to selection
+  await page.keyboard.press('n');
+  ok(await page.isVisible('#mini'), 'N toggles the minimap');
+  ok(await page.$$eval('#minisvg rect', n => n.length) >= 4, 'minimap draws the board');
+  await page.evaluate(id => { sel = new Set([id]); render(); }, a);
+  const z0 = await page.evaluate(() => cam.z);
+  await page.keyboard.press('Shift+@');
+  await page.waitForTimeout(400);
+  ok(await page.evaluate(z0 => Math.abs(cam.z - z0) > 0.01, z0), 'Shift+2 zooms to the selection');
+  if (SHOTS) await page.screenshot({ path: SHOTS + '/power.png' });
+
+  // board file round trip keeps the image
+  const file = await page.evaluate(() => boardFile('t', els));
+  const nf = Object.keys(JSON.parse(file).files || {}).length;
+  ok(nf === 1, 'board file embeds images (' + nf + ')');
+
+  ok(errors.length === 0, 'no console errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await ctx.close();
+}
+
 async function phone(browser) {
   console.log('phone');
   const { ctx, page, errors } = await fresh(browser, { ...devices['iPhone 13'] });
@@ -178,6 +286,7 @@ const browser = await chromium.launch();
 try {
   await desktop(browser);
   await boards(browser);
+  await power(browser);
   await phone(browser);
 } finally {
   await browser.close();

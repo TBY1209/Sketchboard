@@ -4,7 +4,7 @@ const SB = (a, i, t, c = '') =>
 function sbarUpdate() {
   const bar = $('#sbar'),
     S = selEls();
-  if (!S.length || editing || op || tool !== 'select' || !$('#modal').hidden) {
+  if (!S.length || editing || op || tool !== 'select' || !$('#modal').hidden || !$('#ctx').hidden) {
     bar.hidden = true;
     sbKey = '';
     $('#alignpop').hidden = true;
@@ -16,8 +16,8 @@ function sbarUpdate() {
     key = line
       ? 'L' + one.route + one.head
       : one
-        ? 'S' + (one.t === 'pen' ? 'p' : '')
-        : 'M' + S.length + (alignOK ? 'a' : '');
+        ? 'S' + one.t
+        : 'M' + S.length + (alignOK ? 'a' : '') + (selIsGroup() ? 'g' : selHasGroup() ? 'h' : '');
   if (key !== sbKey) {
     sbKey = key;
     let h = '';
@@ -35,7 +35,9 @@ function sbarUpdate() {
         SB('del', 'del', 'Delete', 'danger');
     } else if (one)
       h =
-        (one.t === 'pen' ? '' : SB('edit', 'edit', 'Edit text')) +
+        (one.t === 'pen' || one.t === 'img'
+          ? ''
+          : SB('edit', 'edit', one.t === 'frame' ? 'Rename frame' : 'Edit text')) +
         SB('dup', 'dup', 'Duplicate') +
         SB('style', 'pal', 'Style', 'narrow sel-only') +
         '<span class="sep"></span>' +
@@ -44,6 +46,9 @@ function sbarUpdate() {
       h =
         `<span class="cnt">${S.length} selected</span>` +
         (alignOK ? SB('align', 'alignC', 'Align and space evenly') : '') +
+        (selHasGroup()
+          ? SB('ungroup', 'ungroup', 'Ungroup (' + keyLabel('Mod+Shift+G') + ')')
+          : SB('group', 'group', 'Group (' + keyLabel('Mod+G') + ')')) +
         SB('dup', 'dup', 'Duplicate all') +
         '<span class="sep"></span>' +
         SB('del', 'del', 'Delete all', 'danger');
@@ -116,6 +121,8 @@ $('#sbar').addEventListener('click', e => {
     if (document.body.classList.contains('panel-open')) document.body.classList.remove('panel-open');
     else openPanel();
   } else if (a === 'rev') reverse();
+  else if (a === 'group') groupSel();
+  else if (a === 'ungroup') ungroupSel();
   else if (a === 'align') {
     const pp = $('#alignpop');
     pp.hidden = !pp.hidden;

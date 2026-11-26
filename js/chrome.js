@@ -1,11 +1,14 @@
 /* Top bars, tool tray, menu, theme, toasts and modals. */
-$('#shapes').innerHTML = SHAPES.map(
-  t => `<button data-s="${t}" title="${NAMES[t]}" aria-label="${NAMES[t]}">${shapeIcon(t, 26)}</button>`
-).join('');
+$('#shapes').innerHTML =
+  SHAPES.map(
+    t => `<button data-s="${t}" title="${NAMES[t]}" aria-label="${NAMES[t]}">${shapeIcon(t, 26)}</button>`
+  ).join('') +
+  `<button data-s="frame" title="Frame (F): a titled area that carries what's inside it" aria-label="Frame">${shapeIcon('frame', 26)}</button>`;
 function closePops() {
   $('#shapes').hidden = true;
   $('#menu').hidden = true;
   $('#alignpop').hidden = true;
+  if (typeof closeCtx === 'function') closeCtx();
 }
 $('#tray').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -66,6 +69,14 @@ $('#menuBtn').addEventListener('click', e => {
   const open = $('#menu').hidden;
   closePops();
   $('#menu').hidden = !open;
+  if (open)
+    for (const b of $('#menu').querySelectorAll('[data-act]')) {
+      const a = ACT[b.dataset.act];
+      if (!a) continue;
+      b.disabled = !!(a.when && !a.when());
+      const c = b.querySelector('.chk');
+      if (c && a.toggle && !c.id) c.textContent = a.toggle() ? '✓' : '';
+    }
 });
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button');

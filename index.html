@@ -26,7 +26,10 @@
       </svg>
       <div id="empty" hidden>
         <b>A blank board</b>
-        <span>Pick a tool below, or press <kbd>R</kbd> for a rectangle, <kbd>S</kbd> for a sticky note, <kbd>T</kbd> for text.</span>
+        <span
+          >Pick a tool below, or press <kbd>R</kbd> for a rectangle, <kbd>S</kbd> for a sticky note,
+          <kbd>T</kbd> for text.</span
+        >
         <span class="wide-only">Paste text or a board you copied with <kbd>Ctrl+V</kbd>.</span>
       </div>
       <div id="editor" hidden><div id="edin" contenteditable="true" spellcheck="false"></div></div>
@@ -34,14 +37,42 @@
 
     <main id="home" aria-label="Your boards">
       <header class="hhead">
-        <span class="brand"><svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7.5" fill="#ffd23f" /><circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" /><path d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" /><path d="M13.4 6.4l3 1.4-1.4 3" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>Sketchboard</span>
+        <span class="brand"
+          ><svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="24" height="24" rx="7.5" fill="#ffd23f" />
+            <circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" />
+            <path
+              d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8"
+              fill="none"
+              stroke="#1d1b24"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+            <path
+              d="M13.4 6.4l3 1.4-1.4 3"
+              fill="none"
+              stroke="#1d1b24"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            /></svg
+          >Sketchboard</span
+        >
         <label class="hsearch"
-          ><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg
-          ><input id="hq" type="search" placeholder="Search boards" aria-label="Search boards" autocomplete="off"
+          ><svg class="ico" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="M16 16l4.5 4.5" /></svg
+          ><input
+            id="hq"
+            type="search"
+            placeholder="Search boards"
+            aria-label="Search boards"
+            autocomplete="off"
         /></label>
         <div class="hacts">
           <button id="hImport" class="btn" title="Open a .json board file">
-            <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg><span>Import</span>
+            <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg
+            ><span>Import</span>
           </button>
           <button id="hTheme" aria-label="Appearance" title="Appearance"></button>
         </div>
@@ -62,32 +93,91 @@
       <footer class="hfoot" id="hfoot"></footer>
     </main>
     <div class="pop" id="bmenu" hidden role="menu"></div>
+    <div class="pop" id="ctx" hidden role="menu" aria-label="Context menu"></div>
+    <div id="mini" class="wide" hidden>
+      <svg id="minisvg" viewBox="0 0 200 132" aria-label="Minimap: click to move around"></svg>
+    </div>
+    <div id="pal" hidden>
+      <div class="pcard" role="dialog" aria-label="Search and commands">
+        <label class="psearch"
+          ><svg class="ico" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6.5" />
+            <path d="M16 16l4.5 4.5" /></svg
+          ><input
+            id="palIn"
+            placeholder="Search commands, boards, frames…"
+            autocomplete="off"
+            spellcheck="false"
+            role="combobox"
+            aria-controls="palList"
+            aria-expanded="true"
+        /></label>
+        <div id="palList" role="listbox"></div>
+        <div class="pfoot">
+          <span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> run</span
+          ><span><kbd>Esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
 
     <div class="bar" id="tl">
       <button id="menuBtn" aria-label="Menu" title="Menu">
         <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
       </button>
       <button id="homeBtn" class="home" aria-label="All boards" title="All boards">
-        <svg class="ico chev" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6" /></svg><svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7.5" fill="#ffd23f" /><circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" /><path d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" /><path d="M13.4 6.4l3 1.4-1.4 3" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        <svg class="ico chev" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6" /></svg
+        ><svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+          <rect width="24" height="24" rx="7.5" fill="#ffd23f" />
+          <circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" />
+          <path
+            d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8"
+            fill="none"
+            stroke="#1d1b24"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+          <path
+            d="M13.4 6.4l3 1.4-1.4 3"
+            fill="none"
+            stroke="#1d1b24"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
       <button id="titleBtn" class="title" title="Rename board">Sketchboard</button>
       <span id="status">Saved</span>
     </div>
 
     <div class="bar" id="tr">
+      <button id="palBtn" class="wide" aria-label="Search and commands" title="Search and commands (Ctrl+K)">
+        <svg class="ico" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="M16 16l4.5 4.5" />
+        </svg>
+      </button>
       <button id="styleBtn" class="narrow sel-only" aria-label="Style" title="Style">
         <svg class="ico" viewBox="0 0 24 24">
-          <path d="M12 3a9 9 0 100 18c1.2 0 1.6-1 1.1-2-.6-1.2.2-2.5 1.5-2.5H17a4 4 0 004-4c0-5-4-9.5-9-9.5z" />
+          <path
+            d="M12 3a9 9 0 100 18c1.2 0 1.6-1 1.1-2-.6-1.2.2-2.5 1.5-2.5H17a4 4 0 004-4c0-5-4-9.5-9-9.5z"
+          />
           <circle cx="7.5" cy="11" r="1.2" />
           <circle cx="10.5" cy="7" r="1.2" />
           <circle cx="15.5" cy="7.5" r="1.2" />
         </svg>
       </button>
       <button id="editBtn" class="narrow sel-only" aria-label="Edit text" title="Edit text">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M4 19h6M7 19V6M3.5 6h7M14 19l3.5-9 3.5 9M15.2 16h4.6" /></svg>
+        <svg class="ico" viewBox="0 0 24 24">
+          <path d="M4 19h6M7 19V6M3.5 6h7M14 19l3.5-9 3.5 9M15.2 16h4.6" />
+        </svg>
       </button>
       <button id="themeBtn" class="wide" aria-label="Appearance" title="Appearance"></button>
-      <button id="multiBtn" aria-label="Select several" title="Select several: tap shapes to add them, drag to box-select">
+      <button
+        id="multiBtn"
+        aria-label="Select several"
+        title="Select several: tap shapes to add them, drag to box-select"
+      >
         <svg class="ico" viewBox="0 0 24 24">
           <rect x="3.5" y="3.5" width="12" height="12" rx="2.5" stroke-dasharray="3 2.6" />
           <path d="M15.5 14v6.5M12.3 17.3h6.4" />
@@ -153,7 +243,11 @@
           <path d="M12.5 7l4.5 4.5" />
         </svg>
       </button>
-      <button id="symBtn" title="Symmetry mode (M): snap to centres, edges and equal gaps" aria-label="Symmetry mode">
+      <button
+        id="symBtn"
+        title="Symmetry mode (M): snap to centres, edges and equal gaps"
+        aria-label="Symmetry mode"
+      >
         <svg class="ico" viewBox="0 0 24 24">
           <path d="M12 3v18" stroke-dasharray="2.4 2.4" />
           <path d="M9.5 7L4 12l5.5 5z" />
@@ -161,7 +255,12 @@
         </svg>
       </button>
       <span class="sep wide"></span>
-      <button id="lockBtn" class="wide" title="Keep tool active after drawing (Q)" aria-label="Keep tool active">
+      <button
+        id="lockBtn"
+        class="wide"
+        title="Keep tool active after drawing (Q)"
+        aria-label="Keep tool active"
+      >
         <svg class="ico" viewBox="0 0 24 24">
           <rect x="5" y="11" width="14" height="9" rx="2" />
           <path d="M8 11V8a4 4 0 017.6-1.8" />
@@ -173,10 +272,46 @@
     <div class="pop" id="alignpop" hidden role="toolbar" aria-label="Align and distribute"></div>
 
     <div class="pop" id="menu" hidden>
-      <button data-act="newBoard"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M12 8.5v7M8.5 12h7" /></svg>New board</button>
-      <button data-act="home"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>All boards</button>
-      <button data-act="rename"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></svg>Rename board</button>
-      <button data-act="dupBoard"><svg class="ico" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V4.5h-11v11h4" /></svg>Duplicate board</button>
+      <button data-act="newBoard">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <path d="M12 8.5v7M8.5 12h7" /></svg
+        >New board
+      </button>
+      <button data-act="home">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="7" height="7" rx="1.5" />
+          <rect x="13" y="4" width="7" height="7" rx="1.5" />
+          <rect x="4" y="13" width="7" height="7" rx="1.5" />
+          <rect x="13" y="13" width="7" height="7" rx="1.5" /></svg
+        >All boards
+      </button>
+      <button data-act="rename">
+        <svg class="ico" viewBox="0 0 24 24">
+          <path d="M4 20h4L19 9l-4-4L4 16z" />
+          <path d="M13.5 6.5l4 4" /></svg
+        >Rename board
+      </button>
+      <button data-act="dupBoard">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="8.5" y="8.5" width="11" height="11" rx="2" />
+          <path d="M15.5 8.5V4.5h-11v11h4" /></svg
+        >Duplicate board
+      </button>
+      <hr />
+      <button data-act="palette">
+        <svg class="ico" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="M16 16l4.5 4.5" /></svg
+        >Search and commands<kbd class="mk">Ctrl K</kbd>
+      </button>
+      <button data-act="insertImage">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+          <circle cx="9" cy="10" r="1.8" />
+          <path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5" /></svg
+        >Insert image
+      </button>
       <hr />
       <button data-act="png">
         <svg class="ico" viewBox="0 0 24 24">
@@ -185,7 +320,8 @@
         >Export image (PNG)
       </button>
       <button data-act="svg">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Export vector (SVG)
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Export vector
+        (SVG)
       </button>
       <button data-act="json">
         <svg class="ico" viewBox="0 0 24 24">
@@ -229,6 +365,12 @@
           <path d="M14.5 7L20 12l-5.5 5z" /></svg
         >Symmetry mode<span class="chk" id="symChk"></span>
       </button>
+      <button data-act="minimap" class="wide">
+        <svg class="ico" viewBox="0 0 24 24">
+          <rect x="3.5" y="5" width="17" height="14" rx="2" />
+          <rect x="11" y="11" width="7" height="5" rx="1" /></svg
+        >Show minimap<span class="chk"></span>
+      </button>
       <button data-act="theme">
         <svg class="ico" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="8" />
@@ -243,7 +385,8 @@
       </button>
       <hr />
       <button data-act="clear" style="color: #e03131">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" /></svg>Clear board
+        <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" /></svg>Clear
+        board
       </button>
     </div>
 
@@ -253,6 +396,7 @@
     <div id="modal" hidden><div class="mcard" id="mcard"></div></div>
     <input type="color" id="cpick" tabindex="-1" aria-hidden="true" />
     <input type="file" id="file" accept=".json,application/json" multiple hidden />
+    <input type="file" id="imgfile" accept="image/*" multiple hidden />
 
     <script src="js/core.js"></script>
     <script src="js/geometry.js"></script>
@@ -273,6 +417,8 @@
     <script src="js/boards.js"></script>
     <script src="js/templates.js"></script>
     <script src="js/home.js"></script>
+    <script src="js/power.js"></script>
+    <script src="js/palette.js"></script>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>
   </body>

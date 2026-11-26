@@ -167,7 +167,7 @@ $('#bmenu').addEventListener('click', async e => {
     toast('Board duplicated');
   } else if (a === 'download') {
     const doc = await Store.getDoc(id);
-    const s = JSON.stringify({ sketchboard: 1, name: meta.name, els: doc ? doc.els : [] });
+    const s = await boardFile(meta.name, doc ? doc.els : []);
     const prev = board;
     board = meta;
     deliver(fileBase() + '.json', s, () => {});

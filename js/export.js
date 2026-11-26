@@ -1,4 +1,5 @@
 /* PNG / SVG / JSON export and board file import. */
+let exportImgs = {}; // hash -> data URL while building an SVG export
 function drawEl(x, e) {
   x.save();
   x.globalAlpha = e.op;
@@ -27,7 +28,27 @@ function drawEl(x, e) {
     if (e.text) ctext(x, e, { x: g.mid.x - 110, y: g.mid.y, w: 220, h: 0 }, tcol(e, 1), true, true);
   } else {
     x.translate(e.x, e.y);
-    if (e.t === 'pen') {
+    if (e.t === 'frame') {
+      const p = new Path2D(rr(e.w, e.h, Math.min(14, e.w / 2, e.h / 2)));
+      if (e.fill !== 'transparent') {
+        x.fillStyle = e.fill;
+        x.fill(p);
+      }
+      x.strokeStyle = '#d6cfbf';
+      x.lineWidth = 1.5;
+      x.stroke(p);
+      x.font = `700 ${FRAME_TITLE.fs}px ${FONTS.sans}`;
+      x.fillStyle = '#6c6657';
+      x.textAlign = 'left';
+      x.fillText(e.text || 'Frame', 4, -11);
+    } else if (e.t === 'img') {
+      const c = imgCache.get(e.src);
+      if (c && c.state === 'ok') x.drawImage(c.img, 0, 0, e.w, e.h);
+      else {
+        x.fillStyle = '#f1f3f5';
+        x.fillRect(0, 0, e.w, e.h);
+      }
+    } else if (e.t === 'pen') {
       x.strokeStyle = col(e.stroke, 1);
       x.lineWidth = e.sw;
       x.setLineDash(dashArr(e));
@@ -96,6 +117,7 @@ async function exportPNG() {
   try {
     await document.fonts.ready;
   } catch (_) {}
+  await ensureImages(els);
   const b = unionB(els),
     pad = 40,
     W = b.w + pad * 2,
@@ -109,7 +131,7 @@ async function exportPNG() {
   x.fillStyle = '#fff';
   x.fillRect(0, 0, W, H);
   x.translate(pad - b.x, pad - b.y);
-  for (const e of els) drawEl(x, e);
+  for (const e of drawOrder(els)) drawEl(x, e);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
   deliver(fileBase() + '.png', blob, () =>
     modal(
@@ -122,19 +144,31 @@ function svgString() {
     pad = 40,
     W = r1(b.w + pad * 2),
     H = r1(b.h + pad * 2);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${r1(b.x - pad)} ${r1(b.y - pad)} ${W} ${H}"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Figtree&amp;family=Kalam&amp;family=JetBrains+Mono&amp;display=swap');</style><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".16"/></filter></defs><rect x="${r1(b.x - pad)}" y="${r1(b.y - pad)}" width="${W}" height="${H}" fill="#fff"/>${els.map(e => elSVG(e, true)).join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${r1(b.x - pad)} ${r1(b.y - pad)} ${W} ${H}"><defs><style>@import url('https://fonts.googleapis.com/css2?family=Figtree&amp;family=Kalam&amp;family=JetBrains+Mono&amp;display=swap');</style><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity=".16"/></filter></defs><rect x="${r1(b.x - pad)}" y="${r1(b.y - pad)}" width="${W}" height="${H}" fill="#fff"/>${drawOrder(
+    els
+  )
+    .map(e => elSVG(e, true))
+    .join('')}</svg>`;
 }
-function exportSVG() {
+async function exportSVG() {
   if (!els.length) return toast('Nothing on the board yet');
+  exportImgs = await imageFiles(els);
   const s = svgString();
+  exportImgs = {};
   deliver(fileBase() + '.svg', s, () =>
     modal(
       `<h3>SVG code</h3><p>Copy this into a .svg file or straight into Figma.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`
     )
   );
 }
-function exportJSON() {
-  const s = JSON.stringify({ sketchboard: 1, name: board ? board.name : 'Board', els });
+async function boardFile(name, list) {
+  const files = await imageFiles(list),
+    d = { sketchboard: 1, name, els: list };
+  if (Object.keys(files).length) d.files = files;
+  return JSON.stringify(d);
+}
+async function exportJSON() {
+  const s = await boardFile(board ? board.name : 'Board', els);
   deliver(fileBase() + '.json', s, () =>
     modal(
       `<h3>Board file</h3><p>Copy this and keep it somewhere safe. Open board file reads it back.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`
@@ -151,6 +185,7 @@ $('#file').addEventListener('change', async e => {
       const d = JSON.parse(await file.text()),
         list = Array.isArray(d) ? d : d.els;
       if (!Array.isArray(list) || !loadEls(list).length) throw 0;
+      if (d.files) await storeImageFiles(d.files);
       const name =
         (d && typeof d.name === 'string' && d.name) || file.name.replace(/\.json$/i, '') || 'Imported board';
       last = await createBoard(name, list, 'blank');

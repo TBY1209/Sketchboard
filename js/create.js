@@ -1,6 +1,31 @@
 /* Element factories and the sample board. */
 function mk(t, x, y, w, h) {
   const st = t === 'sticky';
+  if (t === 'frame')
+    return Object.assign(mk('rect', x, y, w, h), {
+      t,
+      fill: 'transparent',
+      stroke: 'ink',
+      dash: 'solid',
+      sw: 2,
+      font: 'sans',
+      fs: 16,
+      bold: true,
+      it: false,
+      tc: 'auto',
+      rad: 14,
+      sh: false,
+      text: 'Frame ' + (els.filter(e => e.t === 'frame').length + 1)
+    });
+  if (t === 'img')
+    return Object.assign(mk('rect', x, y, w, h), {
+      t,
+      fill: 'transparent',
+      stroke: 'transparent',
+      sw: 0,
+      rad: 0,
+      sh: false
+    });
   return {
     id: uid(),
     t,

@@ -30,6 +30,27 @@ function elSVG(e, x) {
     return s + '</g>';
   }
   let s = `<g${id} transform="translate(${r1(e.x)} ${r1(e.y)})"${op}>`;
+  if (e.t === 'frame') {
+    const fill = e.fill === 'transparent' ? 'none' : e.fill;
+    s += `<rect width="${r1(e.w)}" height="${r1(e.h)}" rx="14" style="fill:${fill};stroke:${x ? '#d6cfbf' : 'var(--frame)'};stroke-width:1.5px" pointer-events="none"/>`;
+    if (!x)
+      s += `<rect width="${r1(e.w)}" height="${r1(e.h)}" rx="14" fill="none" stroke="transparent" stroke-width="14"/><rect x="0" y="${-FRAME_TITLE.h - 4}" width="${r1(frameTitleW(e))}" height="${FRAME_TITLE.h}" fill="transparent"/>`;
+    if (editing !== e.id)
+      s += `<text x="4" y="-11" style="font-family:${FONTS.sans};font-size:${FRAME_TITLE.fs}px;font-weight:700;fill:${x ? '#6c6657' : 'var(--muted)'}">${esc(e.text || 'Frame')}</text>`;
+    return s + '</g>';
+  }
+  if (e.t === 'img') {
+    const c = x ? null : imgEntry(e.src),
+      href = x ? exportImgs[e.src] || '' : c.state === 'ok' ? c.url : '';
+    if (href)
+      s += `<image href="${href}" width="${r1(e.w)}" height="${r1(e.h)}" preserveAspectRatio="none"/>`;
+    else {
+      s += `<rect width="${r1(e.w)}" height="${r1(e.h)}" rx="8" style="fill:${x ? '#f1f3f5' : 'var(--hover)'};stroke:${x ? '#ced4da' : 'var(--line)'};stroke-width:1.5px" stroke-dasharray="6 5"/>`;
+      if (!x)
+        s += `<text x="${r1(e.w / 2)}" y="${r1(e.h / 2 + 5)}" text-anchor="middle" style="font:600 14px Figtree,sans-serif;fill:var(--muted)">${c.state === 'missing' ? 'Image not on this device' : 'Loading image…'}</text>`;
+    }
+    return s + '</g>';
+  }
   if (e.t === 'pen') {
     const d = penD(e);
     if (!x)
@@ -60,7 +81,9 @@ function render() {
     cancelAnimationFrame(rsRaf);
     rsRaf = 0;
   }
-  layer.innerHTML = els.map(e => elSVG(e)).join('');
+  layer.innerHTML = drawOrder(els)
+    .map(e => elSVG(e))
+    .join('');
   world.setAttribute('transform', `translate(${r1(cam.x)} ${r1(cam.y)}) scale(${cam.z})`);
   let step = G;
   while (step * cam.z < 14) step *= 2;
@@ -73,6 +96,7 @@ function render() {
   renderUI();
   panel();
   if (editing) edStyle();
+  miniSoon();
 }
 function renderCam() {
   world.setAttribute('transform', `translate(${r1(cam.x)} ${r1(cam.y)}) scale(${cam.z})`);
@@ -84,6 +108,7 @@ function renderCam() {
   $('#zl').textContent = Math.round(cam.z * 100) + '%';
   renderUI();
   if (editing) edStyle();
+  miniSoon();
 }
 let raf = 0;
 const camSoon = () => {
@@ -110,6 +135,13 @@ function renderUI() {
   if (hoverId && !sel.has(hoverId)) {
     const h = byId(hoverId);
     if (h) s += outline(h, 2 / z);
+  }
+  if (hoverLock && !op) {
+    const h = byId(hoverLock);
+    if (h && h.lk) {
+      const b = bounds(h);
+      s += `<g transform="translate(${r1(b.x + b.w)} ${r1(b.y)}) scale(${1 / z})" pointer-events="none"><circle r="13" fill="#1d1b24" opacity=".85"/><path d="M-3.5 -1.5v-2.2a3.5 3.5 0 017 0v2.2M-5.5 -1.5h11v7.5h-11z" fill="none" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/></g>`;
+    }
   }
   if (S.length === 1 && S[0].t === 'line') {
     const g = lineGeo(S[0]);

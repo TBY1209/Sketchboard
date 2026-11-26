@@ -50,7 +50,7 @@ function textSVG(e, b, color, halo, force) {
   return `<text text-anchor="${anchor(e, force)}" style="font-family:${FONTS[e.font]};font-size:${e.fs}px;font-weight:${e.bold ? 700 : 400};font-style:${e.it ? 'italic' : 'normal'};fill:${color}${halo ? `;stroke:${halo};stroke-width:6px;stroke-linejoin:round;paint-order:stroke` : ''}">${L.map(l => `<tspan x="${r1(l.x)}" y="${r1(l.y)}">${esc(l.s) || ' '}</tspan>`).join('')}</text>`;
 }
 function fitText(e) {
-  if (!e.text || e.t === 'line' || e.t === 'pen') return;
+  if (!e.text || e.t === 'line' || e.t === 'pen' || e.t === 'frame' || e.t === 'img') return;
   const need = () => wrap(e.text, fontStr(e), tbox(e).w).length * e.fs * 1.25;
   let n = 0;
   while (tbox(e).h < need() && n++ < 40) e.h = Math.ceil(e.h * 1.08 + 2);

@@ -60,7 +60,7 @@ const TEMPLATES = [
     name: 'Kanban',
     desc: 'To do, doing, done',
     build: () => [
-      head_(0, -70, 600, 'Project board'),
+      head_(0, -100, 600, 'Project board'),
       ...columns_(
         ['To do', 'Doing', 'Done'],
         ['#e9ecef', '#d0ebff', '#d3f9d8'],
@@ -129,7 +129,7 @@ const TEMPLATES = [
     name: 'Retro',
     desc: 'Went well, to improve, actions',
     build: () => [
-      head_(0, -70, 600, 'Sprint retro'),
+      head_(0, -100, 600, 'Sprint retro'),
       ...columns_(
         ['Went well', 'To improve', 'Actions'],
         ['#d3f9d8', '#ffc9c9', '#e5dbff'],

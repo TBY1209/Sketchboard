@@ -15,6 +15,7 @@
   --hover: light-dark(#f2eee4, #2c2935);
   --tray: light-dark(#1c1a21, #2e2b38);
   --acc: #ffd23f;
+  --frame: light-dark(#cfc7b5, #4a4655);
   --sel: #3a57ff;
   --disp: 'Bricolage Grotesque', Figtree, system-ui, sans-serif;
   --glass: light-dark(rgba(255, 253, 248, 0.97), rgba(32, 30, 40, 0.96));
@@ -1481,4 +1482,230 @@ body[data-route='share'] #titleBtn:hover {
   .wide-only {
     display: none;
   }
+}
+
+/* ---------- menu extras ---------- */
+#menu {
+  max-height: calc(100dvh - 80px);
+  overflow: auto;
+}
+#menu .mk {
+  margin-left: auto;
+  font:
+    11.5px 'JetBrains Mono',
+    monospace;
+  color: var(--muted);
+}
+#menu button:disabled .ico {
+  opacity: 0.6;
+}
+
+/* ---------- context menu ---------- */
+#ctx {
+  width: 250px;
+  display: grid;
+  z-index: 15;
+  padding: 6px;
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+}
+#ctx button {
+  min-height: 36px;
+  gap: 10px;
+}
+#ctx .cl {
+  flex: 1;
+}
+#ctx kbd {
+  font:
+    11px 'JetBrains Mono',
+    monospace;
+  color: var(--muted);
+}
+#ctx .ci {
+  width: 22px;
+}
+#ctx hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 4px 2px;
+}
+
+/* ---------- minimap ---------- */
+#mini {
+  position: fixed;
+  right: 12px;
+  bottom: 78px;
+  z-index: 5;
+  width: 200px;
+  height: 132px;
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  box-shadow: var(--lift);
+  overflow: hidden;
+  animation: rise 0.25s both;
+  transform-origin: 100% 100%;
+}
+#mini[hidden] {
+  display: none;
+}
+#minisvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: pointer;
+  touch-action: none;
+}
+#minisvg .me {
+  stroke: none;
+  opacity: 0.9;
+}
+#minisvg .mo {
+  stroke: var(--muted);
+  stroke-width: 0.8;
+  fill: none;
+}
+#minisvg .mf {
+  stroke: var(--frame);
+  stroke-width: 1;
+  fill: none;
+}
+#minisvg .ml {
+  stroke: var(--muted);
+  stroke-width: 0.8;
+}
+#minisvg .mv {
+  fill: color-mix(in srgb, var(--sel) 10%, transparent);
+  stroke: var(--sel);
+  stroke-width: 1.5;
+}
+
+/* ---------- command palette ---------- */
+#pal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(14, 10, 22, 0.32);
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  padding: min(14vh, 120px) 16px 16px;
+}
+#pal[hidden] {
+  display: none;
+}
+.pcard {
+  width: min(600px, 100%);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 30px 70px -20px rgba(18, 10, 40, 0.55);
+  overflow: hidden;
+  animation: pop 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  display: flex;
+  flex-direction: column;
+  max-height: min(560px, calc(100dvh - 140px));
+}
+.psearch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 56px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+.psearch input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: none;
+  font:
+    17px Figtree,
+    system-ui,
+    sans-serif;
+  color: var(--ink);
+  height: 100%;
+}
+#palList {
+  overflow: auto;
+  padding: 6px;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+#palList button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  text-align: left;
+  border-radius: 10px;
+  justify-content: start;
+}
+#palList button:hover {
+  background: none;
+}
+#palList button.on {
+  background: var(--hover);
+  box-shadow: inset 3px 0 0 var(--sel);
+}
+#palList .pl {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#palList .pg {
+  font-size: 12px;
+  color: var(--muted);
+}
+#palList kbd,
+.pfoot kbd {
+  font:
+    11px 'JetBrains Mono',
+    monospace;
+  background: var(--hover);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: var(--muted);
+}
+.pnone {
+  padding: 22px;
+  text-align: center;
+  color: var(--muted);
+}
+.pfoot {
+  display: flex;
+  gap: 16px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+.pfoot kbd {
+  margin-right: 3px;
+}
+@media (max-width: 600px) {
+  .pfoot {
+    display: none;
+  }
+}
+
+/* ---------- drag and drop ---------- */
+#stage.drop::after {
+  content: 'Drop images or a board file';
+  position: absolute;
+  inset: 12px;
+  border: 2.5px dashed var(--sel);
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  font: 800 22px var(--disp);
+  color: var(--sel);
+  background: color-mix(in srgb, var(--sel) 6%, transparent);
+  pointer-events: none;
 }

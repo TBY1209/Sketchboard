@@ -43,6 +43,9 @@ $('#gridChk').textContent = '✓';
   setSym(y === '1', true);
 }
 setTool('select');
+for (const k of document.querySelectorAll('.mk')) k.textContent = keyLabel('Mod+K');
+$('#palBtn').title = 'Search and commands (' + keyLabel('Mod+K') + ')';
+setMini(miniOn);
 bootBoards();
 addEventListener('resize', () => render());
 const scrollOK = t => t && t.closest && t.closest('#panel,.mcard,#home,.pop');
