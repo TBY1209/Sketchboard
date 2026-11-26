@@ -43,27 +43,21 @@ let saveT = 0;
 const saveNow = () => {
   clearTimeout(saveT);
   saveT = 0;
-  try {
-    localStorage.setItem(LS, JSON.stringify({ els, cam, t: Date.now() }));
-  } catch (_) {}
+  return writeBoard(false);
 };
-addEventListener('pagehide', saveNow);
+const flushIfPending = () => {
+  if (saveT) saveNow();
+};
+addEventListener('pagehide', flushIfPending);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) saveNow();
+  if (document.hidden) flushIfPending();
 });
 function save() {
   clearTimeout(saveT);
   saveT = setTimeout(saveNow, 350);
+  emptyHint();
 }
-const saveCam = () => {
-  try {
-    const d = JSON.parse(localStorage.getItem(LS) || 'null');
-    if (d) {
-      d.cam = cam;
-      localStorage.setItem(LS, JSON.stringify(d));
-    }
-  } catch (_) {}
-};
+const saveCam = () => saveMetaOnly();
 const okC = c => typeof c === 'string' && /^(#[0-9a-fA-F]{3,8}|transparent|ink)$/.test(c);
 const num = (v, d) => (Number.isFinite(+v) && v !== null && v !== '' ? +v : d);
 const okId = v => typeof v === 'string' && /^[\w-]{1,40}$/.test(v);

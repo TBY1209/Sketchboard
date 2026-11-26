@@ -14,6 +14,13 @@ addEventListener('keydown', e => {
     return;
   }
   if (isField(e.target)) return;
+  if (route !== 'board') {
+    if (e.key === '/' && route === 'home') {
+      e.preventDefault();
+      $('#hq').focus();
+    }
+    return;
+  }
   if (e.key === ' ') {
     if (!spaceDown) {
       spaceDown = true;
@@ -62,21 +69,21 @@ addEventListener('keyup', e => {
   }
 });
 document.addEventListener('copy', e => {
-  if (editing || isField(e.target) || !sel.size) return;
+  if (route !== 'board' || readOnly || editing || isField(e.target) || !sel.size) return;
   clip = JSON.stringify({ sketchboard: 1, els: copyList() });
   e.clipboardData.setData('text/plain', clip);
   e.preventDefault();
   toast('Copied');
 });
 document.addEventListener('cut', e => {
-  if (editing || isField(e.target) || !sel.size) return;
+  if (route !== 'board' || readOnly || editing || isField(e.target) || !sel.size) return;
   clip = JSON.stringify({ sketchboard: 1, els: copyList() });
   e.clipboardData.setData('text/plain', clip);
   e.preventDefault();
   del();
 });
 document.addEventListener('paste', e => {
-  if (editing || isField(e.target)) return;
+  if (route !== 'board' || readOnly || editing || isField(e.target)) return;
   const t = e.clipboardData.getData('text/plain') || '';
   e.preventDefault();
   let data = null;

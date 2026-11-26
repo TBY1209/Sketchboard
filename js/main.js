@@ -27,15 +27,6 @@ function grainTile(r, g, b, maxA) {
 }
 
 /* ---------- start ---------- */
-let local = null;
-try {
-  local = JSON.parse(localStorage.getItem(LS) || 'null');
-} catch (_) {}
-if (local && Array.isArray(local.els)) {
-  els = loadEls(local.els);
-  if (local.cam && Number.isFinite(local.cam.z))
-    cam = { x: num(local.cam.x, 0), y: num(local.cam.y, 0), z: clampZ(num(local.cam.z, 1)) };
-} else els = sample();
 $('#gridChk').textContent = '✓';
 {
   let m = 'auto';
@@ -52,10 +43,9 @@ $('#gridChk').textContent = '✓';
   setSym(y === '1', true);
 }
 setTool('select');
-render();
-if (!local) fit();
+bootBoards();
 addEventListener('resize', () => render());
-const scrollOK = t => t && t.closest && t.closest('#panel,.mcard');
+const scrollOK = t => t && t.closest && t.closest('#panel,.mcard,#home,.pop');
 document.addEventListener(
   'touchmove',
   e => {

@@ -100,12 +100,24 @@ $('#styleBtn').addEventListener('click', () => {
   else openPanel();
 });
 let tT = 0;
-function toast(t) {
+/* toast('Text') or toast('Deleted', {label: 'Undo', run}) for an action button */
+function toast(t, act) {
   const el = $('#toast');
-  el.textContent = t;
+  el.innerHTML = '';
+  el.append(document.createTextNode(t));
+  if (act) {
+    const b = document.createElement('button');
+    b.textContent = act.label;
+    b.onclick = () => {
+      el.classList.remove('show');
+      act.run();
+    };
+    el.append(b);
+  }
+  el.classList.toggle('act', !!act);
   el.classList.add('show');
   clearTimeout(tT);
-  tT = setTimeout(() => el.classList.remove('show'), 2000);
+  tT = setTimeout(() => el.classList.remove('show'), act ? 6000 : 2200);
 }
 function modal(html) {
   $('#mcard').innerHTML = html;
@@ -135,7 +147,7 @@ $('#modal').addEventListener('click', e => {
     end();
     closeModal();
     render();
-    toast('Board cleared — undo brings it back');
+    toast('Board cleared', { label: 'Undo', run: undo });
   }
 });
 function confirmClear() {

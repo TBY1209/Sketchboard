@@ -221,10 +221,33 @@ action({
 });
 
 /* ---------- board ---------- */
+action({ id: 'newBoard', label: 'New board', group: 'Board', run: () => newBoard('blank') });
+action({ id: 'home', label: 'All boards', group: 'Board', run: () => go('#/') });
+action({
+  id: 'rename',
+  label: 'Rename board',
+  group: 'Board',
+  when: () => !!board && !readOnly,
+  run: () => $('#titleBtn').click()
+});
+action({
+  id: 'dupBoard',
+  label: 'Duplicate board',
+  group: 'Board',
+  when: () => !!board && !readOnly,
+  run: async () => {
+    await flush();
+    const m = await duplicateBoard(board.id);
+    if (m) {
+      go('#/b/' + m.id);
+      toast('Opened a copy');
+    }
+  }
+});
 action({ id: 'png', label: 'Export image (PNG)', group: 'Board', run: () => exportPNG() });
 action({ id: 'svg', label: 'Export vector (SVG)', group: 'Board', run: () => exportSVG() });
 action({ id: 'json', label: 'Save board file', group: 'Board', run: () => exportJSON() });
-action({ id: 'open', label: 'Open board file', group: 'Board', run: () => $('#file').click() });
+action({ id: 'open', label: 'Import board file', group: 'Board', run: () => $('#file').click() });
 action({
   id: 'clear',
   label: 'Clear board',

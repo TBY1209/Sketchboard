@@ -111,7 +111,7 @@ async function exportPNG() {
   x.translate(pad - b.x, pad - b.y);
   for (const e of els) drawEl(x, e);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
-  deliver('sketchboard.png', blob, () =>
+  deliver(fileBase() + '.png', blob, () =>
     modal(
       `<h3>Your board as an image</h3><p>Long-press or right-click the picture to save it.</p><img alt="Exported board" src="${c.toDataURL('image/png')}"><div class="mrow"><button class="btn pri" data-close>Done</button></div>`
     )
@@ -127,35 +127,57 @@ function svgString() {
 function exportSVG() {
   if (!els.length) return toast('Nothing on the board yet');
   const s = svgString();
-  deliver('sketchboard.svg', s, () =>
+  deliver(fileBase() + '.svg', s, () =>
     modal(
       `<h3>SVG code</h3><p>Copy this into a .svg file or straight into Figma.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`
     )
   );
 }
 function exportJSON() {
-  const s = JSON.stringify({ sketchboard: 1, els });
-  deliver('sketchboard.json', s, () =>
+  const s = JSON.stringify({ sketchboard: 1, name: board ? board.name : 'Board', els });
+  deliver(fileBase() + '.json', s, () =>
     modal(
       `<h3>Board file</h3><p>Copy this and keep it somewhere safe. Open board file reads it back.</p><textarea readonly>${esc(s)}</textarea><div class="mrow"><button class="btn" data-close>Close</button><button class="btn pri" data-copy>Copy</button></div>`
     )
   );
 }
 $('#file').addEventListener('change', async e => {
-  const file = e.target.files[0];
+  const files = [...e.target.files];
   e.target.value = '';
-  if (!file) return;
-  try {
-    const d = JSON.parse(await file.text()),
-      L = loadEls(Array.isArray(d) ? d : d.els);
-    if (!L.length) throw 0;
-    begin();
-    els = L;
-    sel.clear();
-    end();
-    fit();
-    toast('Board opened');
-  } catch (_) {
-    toast('That file is not a Sketchboard board');
+  let last = null,
+    bad = 0;
+  for (const file of files) {
+    try {
+      const d = JSON.parse(await file.text()),
+        list = Array.isArray(d) ? d : d.els;
+      if (!Array.isArray(list) || !loadEls(list).length) throw 0;
+      const name =
+        (d && typeof d.name === 'string' && d.name) || file.name.replace(/\.json$/i, '') || 'Imported board';
+      last = await createBoard(name, list, 'blank');
+    } catch (_) {
+      bad++;
+    }
+  }
+  if (bad)
+    toast(
+      bad === 1 && files.length === 1
+        ? 'That file is not a Sketchboard board'
+        : bad + ' file(s) could not be read'
+    );
+  if (last) {
+    if (files.length - bad > 1) {
+      toast(files.length - bad + ' boards imported');
+      if (route === 'home') renderHome();
+    } else go('#/b/' + last.id);
   }
 });
+function fileBase() {
+  const n = (board && board.name) || 'sketchboard';
+  return (
+    n
+      .replace(/[\\/:*?"<>|]+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60) || 'sketchboard'
+  );
+}

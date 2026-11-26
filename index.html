@@ -11,7 +11,7 @@
     />
     <link rel="stylesheet" href="css/app.css" />
   </head>
-  <body>
+  <body data-route="boot">
     <div id="stage">
       <svg id="svg" data-tool="select" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -24,29 +24,54 @@
           <g id="ui"></g>
         </g>
       </svg>
+      <div id="empty" hidden>
+        <b>A blank board</b>
+        <span>Pick a tool below, or press <kbd>R</kbd> for a rectangle, <kbd>S</kbd> for a sticky note, <kbd>T</kbd> for text.</span>
+        <span class="wide-only">Paste text or a board you copied with <kbd>Ctrl+V</kbd>.</span>
+      </div>
       <div id="editor" hidden><div id="edin" contenteditable="true" spellcheck="false"></div></div>
     </div>
+
+    <main id="home" aria-label="Your boards">
+      <header class="hhead">
+        <span class="brand"><svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7.5" fill="#ffd23f" /><circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" /><path d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" /><path d="M13.4 6.4l3 1.4-1.4 3" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>Sketchboard</span>
+        <label class="hsearch"
+          ><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg
+          ><input id="hq" type="search" placeholder="Search boards" aria-label="Search boards" autocomplete="off"
+        /></label>
+        <div class="hacts">
+          <button id="hImport" class="btn" title="Open a .json board file">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg><span>Import</span>
+          </button>
+          <button id="hTheme" aria-label="Appearance" title="Appearance"></button>
+        </div>
+      </header>
+      <section class="hsec">
+        <h2>Start something new</h2>
+        <div id="tpls" class="tpls"></div>
+      </section>
+      <section class="hsec">
+        <div class="hrow">
+          <h2>Your boards <span id="bcount"></span></h2>
+          <div class="seg" id="hsort" role="group" aria-label="Sort boards">
+            <button data-sort="recent" class="on">Recent</button><button data-sort="name">Name</button>
+          </div>
+        </div>
+        <div id="boards" class="bgrid"></div>
+      </section>
+      <footer class="hfoot" id="hfoot"></footer>
+    </main>
+    <div class="pop" id="bmenu" hidden role="menu"></div>
 
     <div class="bar" id="tl">
       <button id="menuBtn" aria-label="Menu" title="Menu">
         <svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
       </button>
-      <span class="brand"
-        ><svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
-          <rect width="24" height="24" rx="7.5" fill="#ffd23f" />
-          <circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" />
-          <path d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" />
-          <path
-            d="M13.4 6.4l3 1.4-1.4 3"
-            fill="none"
-            stroke="#1d1b24"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          /></svg
-        >Sketchboard</span
-      >
-      <span id="status">Saved on this device</span>
+      <button id="homeBtn" class="home" aria-label="All boards" title="All boards">
+        <svg class="ico chev" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6" /></svg><svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7.5" fill="#ffd23f" /><circle cx="7" cy="16.5" r="2.3" fill="#1d1b24" /><path d="M8.7 14.8C11.2 9.6 13.2 12.6 15.4 8" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" /><path d="M13.4 6.4l3 1.4-1.4 3" fill="none" stroke="#1d1b24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <button id="titleBtn" class="title" title="Rename board">Sketchboard</button>
+      <span id="status">Saved</span>
     </div>
 
     <div class="bar" id="tr">
@@ -148,6 +173,11 @@
     <div class="pop" id="alignpop" hidden role="toolbar" aria-label="Align and distribute"></div>
 
     <div class="pop" id="menu" hidden>
+      <button data-act="newBoard"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M12 8.5v7M8.5 12h7" /></svg>New board</button>
+      <button data-act="home"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>All boards</button>
+      <button data-act="rename"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></svg>Rename board</button>
+      <button data-act="dupBoard"><svg class="ico" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V4.5h-11v11h4" /></svg>Duplicate board</button>
+      <hr />
       <button data-act="png">
         <svg class="ico" viewBox="0 0 24 24">
           <rect x="4" y="5" width="16" height="14" rx="2" />
@@ -164,7 +194,7 @@
         >Save board file
       </button>
       <button data-act="open">
-        <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg>Open board file
+        <svg class="ico" viewBox="0 0 24 24"><path d="M3.5 7.5v11h17v-9h-9l-2-2z" /></svg>Import board file
       </button>
       <hr />
       <button data-act="all">
@@ -222,7 +252,7 @@
     <div id="toast" role="status"></div>
     <div id="modal" hidden><div class="mcard" id="mcard"></div></div>
     <input type="color" id="cpick" tabindex="-1" aria-hidden="true" />
-    <input type="file" id="file" accept=".json,application/json" hidden />
+    <input type="file" id="file" accept=".json,application/json" multiple hidden />
 
     <script src="js/core.js"></script>
     <script src="js/geometry.js"></script>
@@ -239,6 +269,10 @@
     <script src="js/selbar.js"></script>
     <script src="js/chrome.js"></script>
     <script src="js/export.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/boards.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/home.js"></script>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>
   </body>

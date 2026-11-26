@@ -50,7 +50,7 @@ const mkLine = (a, b) => ({
   rad: 0,
   sh: false
 });
-function sample() {
+function sample(welcome) {
   const S = (t, x, y, w, h, text, fill, o = {}) =>
     Object.assign(mk(t, x, y, w, h), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
   const a = S('ellipse', 0, 40, 170, 96, 'New idea', '#fff3a6'),
@@ -58,7 +58,10 @@ function sample() {
     c = S('diamond', 510, 18, 200, 140, 'Worth building?', '#e5dbff'),
     d = S('rect', 800, 40, 180, 96, 'Build it', '#d3f9d8'),
     e = S('para', 512, 250, 196, 90, 'Park it for later', '#ffc9c9', { dash: 'dash' }),
-    t = S('text', 0, -60, 520, 52, 'Product flow (sample board)', 'transparent', { fs: 32, stroke: 'ink' }),
+    t = S('text', 0, -60, 520, 52, welcome ? 'Product flow (sample board)' : 'Product flow', 'transparent', {
+      fs: 32,
+      stroke: 'ink'
+    }),
     n = S(
       'sticky',
       800,
@@ -71,5 +74,17 @@ function sample() {
     );
   const L = (x, y, text = '', route = 'curve') =>
     Object.assign(mkLine({ id: x.id, x: 0, y: 0 }, { id: y.id, x: 0, y: 0 }), { text, route, fs: 16 });
-  return [t, a, b, c, d, e, n, L(a, b), L(b, c), L(c, d, 'yes', 'straight'), L(c, e, 'no', 'rounded')];
+  return [
+    t,
+    a,
+    b,
+    c,
+    d,
+    e,
+    ...(welcome ? [n] : []),
+    L(a, b),
+    L(b, c),
+    L(c, d, 'yes', 'straight'),
+    L(c, e, 'no', 'rounded')
+  ];
 }
