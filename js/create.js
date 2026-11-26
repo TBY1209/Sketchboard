@@ -1,8 +1,10 @@
 /* Element factories and the sample board. */
-function mk(t, x, y, w, h) {
-  const st = t === 'sticky';
+function mk(t, x, y, w, h, pristine) {
+  const st = t === 'sticky',
+    D = pristine ? BASE_DEF : def,
+    td = defFor(t, pristine);
   if (t === 'frame')
-    return Object.assign(mk('rect', x, y, w, h), {
+    return Object.assign(mk('rect', x, y, w, h, true), {
       t,
       fill: 'transparent',
       stroke: 'ink',
@@ -18,7 +20,7 @@ function mk(t, x, y, w, h) {
       text: 'Frame ' + (els.filter(e => e.t === 'frame').length + 1)
     });
   if (t === 'img')
-    return Object.assign(mk('rect', x, y, w, h), {
+    return Object.assign(mk('rect', x, y, w, h, true), {
       t,
       fill: 'transparent',
       stroke: 'transparent',
@@ -33,51 +35,54 @@ function mk(t, x, y, w, h) {
     y,
     w,
     h,
-    fill: st ? '#fff3a6' : t === 'text' ? 'transparent' : def.fill,
-    stroke: st ? 'transparent' : t === 'text' ? 'ink' : def.stroke,
-    sw: def.sw,
-    dash: st ? 'solid' : def.dash,
-    font: def.font,
-    fs: st ? 18 : t === 'text' ? Math.max(def.fs, 20) : def.fs,
-    op: def.op,
+    fill: t === 'text' ? 'transparent' : td.fill,
+    stroke: st ? 'transparent' : t === 'text' ? 'ink' : D.stroke,
+    sw: D.sw,
+    dash: st ? 'solid' : D.dash,
+    font: D.font,
+    fs: td.fs,
+    op: D.op,
     text: '',
-    tc: def.tc,
-    bold: def.bold,
-    it: def.it,
-    ta: def.ta,
-    va: def.va,
-    rad: t === 'round' ? 18 : st ? 4 : t === 'rect' ? def.rad : 0,
-    sh: st ? true : def.sh
+    tc: D.tc,
+    bold: D.bold,
+    it: D.it,
+    ta: D.ta,
+    va: D.va,
+    rad: t === 'round' ? 18 : st ? 4 : t === 'rect' ? D.rad : 0,
+    sh: st ? true : D.sh
   };
 }
-const mkLine = (a, b) => ({
-  id: uid(),
-  t: 'line',
-  a,
-  b,
-  fill: 'transparent',
-  stroke: def.stroke === 'transparent' ? 'ink' : def.stroke,
-  sw: def.sw,
-  dash: def.dash,
-  font: def.font,
-  fs: Math.min(def.fs, 18),
-  op: def.op,
-  route: def.route,
-  head: def.head,
-  hk: def.hk,
-  k: 0.5,
-  text: '',
-  tc: 'auto',
-  bold: false,
-  it: false,
-  ta: 'center',
-  va: 'middle',
-  rad: 0,
-  sh: false
-});
+const mkLine = (a, b, pristine) => {
+  const D = pristine ? BASE_DEF : def;
+  return {
+    id: uid(),
+    t: 'line',
+    a,
+    b,
+    fill: 'transparent',
+    stroke: D.stroke === 'transparent' ? 'ink' : D.stroke,
+    sw: D.sw,
+    dash: D.dash,
+    font: D.font,
+    fs: Math.min(D.fs, 18),
+    op: D.op,
+    route: D.route,
+    head: D.head,
+    hk: D.hk,
+    k: 0.5,
+    text: '',
+    tc: 'auto',
+    bold: false,
+    it: false,
+    ta: 'center',
+    va: 'middle',
+    rad: 0,
+    sh: false
+  };
+};
 function sample(welcome) {
   const S = (t, x, y, w, h, text, fill, o = {}) =>
-    Object.assign(mk(t, x, y, w, h), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
+    Object.assign(mk(t, x, y, w, h, true), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
   const a = S('ellipse', 0, 40, 170, 96, 'New idea', '#fff3a6'),
     b = S('round', 250, 40, 180, 96, 'Sketch it out', '#d0ebff'),
     c = S('diamond', 510, 18, 200, 140, 'Worth building?', '#e5dbff'),
@@ -98,7 +103,7 @@ function sample(welcome) {
       { fs: 18 }
     );
   const L = (x, y, text = '', route = 'curve') =>
-    Object.assign(mkLine({ id: x.id, x: 0, y: 0 }, { id: y.id, x: 0, y: 0 }), { text, route, fs: 16 });
+    Object.assign(mkLine({ id: x.id, x: 0, y: 0 }, { id: y.id, x: 0, y: 0 }, true), { text, route, fs: 16 });
   return [
     t,
     a,

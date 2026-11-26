@@ -1,8 +1,8 @@
 /* Starter templates for new boards. Each build() returns a fresh element array. */
 const T_ = (t, x, y, w, h, text, fill, o = {}) =>
-  Object.assign(mk(t, x, y, w, h), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
+  Object.assign(mk(t, x, y, w, h, true), { text, fill, stroke: t === 'sticky' ? 'transparent' : 'ink' }, o);
 const TL_ = (a, b, o = {}) =>
-  Object.assign(mkLine({ id: a.id, x: 0, y: 0 }, { id: b.id, x: 0, y: 0 }), { fs: 16 }, o);
+  Object.assign(mkLine({ id: a.id, x: 0, y: 0 }, { id: b.id, x: 0, y: 0 }, true), { fs: 16 }, o);
 const head_ = (x, y, w, text, o = {}) =>
   T_(
     'text',
@@ -81,8 +81,13 @@ const TEMPLATES = [
     name: 'Mind map',
     desc: 'One idea, many branches',
     build: () => {
-      const c = T_('ellipse', -110, -60, 220, 120, 'Central idea', '#ffd23f', { fs: 24, bold: true, sw: 3 });
-      const out = [c];
+      const root = T_('ellipse', -120, -60, 240, 120, 'Central idea', '#ffd23f', {
+        fs: 26,
+        bold: true,
+        sw: 3,
+        mm: true
+      });
+      const out = [root];
       const labels = [
         'Why it matters',
         'Who it is for',
@@ -92,12 +97,22 @@ const TEMPLATES = [
         'Open questions'
       ];
       const fills = ['#d0ebff', '#d3f9d8', '#ffc9c9', '#e5dbff', '#c5f6fa', '#ffd8a8'];
-      labels.forEach((t, i) => {
+      const level1 = labels.map((t, i) => {
         const a = -Math.PI / 2 + (i * Math.PI * 2) / labels.length,
           x = Math.cos(a) * 360,
           y = Math.sin(a) * 250;
-        const n = T_('round', x - 90, y - 40, 180, 80, t, fills[i]);
-        out.push(n, TL_(c, n, { head: 'none' }));
+        const n = T_('round', x - 90, y - 40, 180, 80, t, fills[i], { fs: 20 });
+        out.push(n, TL_(root, n, { head: 'none' }));
+        return n;
+      });
+      // two sub-branches, so there is something to fold away straight away
+      [
+        ['Saves time', -270],
+        ['Fewer mistakes', 270]
+      ].forEach(([t, dx]) => {
+        const p = level1[0],
+          n = T_('round', p.x + 90 + dx - 75, p.y - 50, 150, 60, t, fills[0], { fs: 16 });
+        out.push(n, TL_(p, n, { head: 'none' }));
       });
       return out;
     }

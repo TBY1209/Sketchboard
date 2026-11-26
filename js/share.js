@@ -172,16 +172,20 @@ async function xGo() {
       );
     else if (XO.fmt === 'svg') deliver(fileBase() + '.svg', await svgFor(list, { bg }), () => {});
     else if (XO.fmt === 'json')
-      deliver(fileBase() + '.json', await boardFile(board ? board.name : 'Board', list), () => {});
+      deliver(
+        fileBase() + '.json',
+        await boardFile(board ? board.name : 'Board', exportList(XO.scope, true)),
+        () => {}
+      );
     else {
       const frames = framesList();
       const pages =
         XO.scope === 'board' && frames.length && XO.pages !== false
           ? [
-              ...frames.map(f => [f, ...frameKids(f)]),
+              ...frames.map(f => visible([f, ...frameKids(f)])),
               ...(() => {
                 const inF = new Set(frames.flatMap(f => [f, ...frameKids(f)]).map(e => e.id)),
-                  rest = els.filter(e => !inF.has(e.id));
+                  rest = visible(els).filter(e => !inF.has(e.id));
                 return rest.length ? [rest] : [];
               })()
             ]
@@ -269,7 +273,7 @@ async function makeShareLink(list) {
 async function openShare() {
   if (route !== 'board' || !els.length) return toast('Nothing on the board to share yet');
   const scope = sel.size ? 'sel' : 'board';
-  const { url, dropped } = await makeShareLink(exportList(scope));
+  const { url, dropped } = await makeShareLink(exportList(scope, true));
   const kb = (url.length / 1024).toFixed(1);
   const warn = [];
   if (scope === 'sel') warn.push('Only the selection is included.');

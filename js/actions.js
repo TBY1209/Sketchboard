@@ -94,7 +94,7 @@ action({
   keys: ['Mod+A'],
   run: () => {
     closePops();
-    sel = new Set(els.filter(x => !x.lk).map(x => x.id));
+    sel = new Set(els.filter(x => !x.lk && !HIDDEN.has(x.id)).map(x => x.id));
     render();
     toast(sel.size ? sel.size + ' selected' : 'Nothing on the board');
   }
@@ -200,6 +200,22 @@ action({ id: 'zoomIn', label: 'Zoom in', group: 'View', keys: ['Mod+=', 'Mod++']
 action({ id: 'zoomOut', label: 'Zoom out', group: 'View', keys: ['Mod+-'], run: () => zoomC(1 / 1.2) });
 action({ id: 'zoom100', label: 'Zoom to 100%', group: 'View', keys: ['Mod+0'], run: () => zoomC(1 / cam.z) });
 action({ id: 'fit', label: 'Zoom to fit', group: 'View', keys: ['Shift+1'], run: () => fit() });
+action({
+  id: 'mindRoot',
+  label: 'Mind map root',
+  group: 'Mind map',
+  toggle: () => !!(oneSel() && oneSel().mm),
+  when: () => mindEligible(oneSel()),
+  run: toggleMindRoot
+});
+action({
+  id: 'collapse',
+  label: 'Collapse / expand branch',
+  group: 'Mind map',
+  keys: ['Mod+/'],
+  when: canCollapse,
+  run: () => toggleCollapse([...sel][0])
+});
 action({
   id: 'zoomSel',
   label: 'Zoom to selection',

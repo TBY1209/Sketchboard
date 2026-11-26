@@ -83,6 +83,8 @@ function clean(o) {
   e.rad = Math.min(999, Math.max(0, num(o.rad, o.t === 'round' ? 18 : o.t === 'sticky' ? 4 : 0)));
   e.sh = o.sh === undefined ? o.t === 'sticky' : !!o.sh;
   if (okId(o.grp)) e.grp = o.grp;
+  if (o.mm === true) e.mm = true; // mind-map root
+  if (o.cl === true) e.cl = true; // collapsed branch
   if (o.lk === true) e.lk = true;
   if (o.t === 'img') {
     if (!okHash(o.src)) return null;

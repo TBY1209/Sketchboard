@@ -124,6 +124,36 @@ const def = {
   rad: 0,
   sh: false
 };
+const BASE_DEF = { ...def }; // untouched copy: templates and the sample board build from this, never from "last used"
+/* Built-in look for each new shape: fill and font size, chosen so a short label fits the default size
+   (font sizes follow each shape's inner text box, see tbox()). Colours echo the sample flowchart. */
+const TYPE_DEFAULTS = {
+  rect: { fill: '#d0ebff', fs: 20 },
+  round: { fill: '#d0ebff', fs: 20 },
+  ellipse: { fill: '#fff3a6', fs: 20 },
+  diamond: { fill: '#e5dbff', fs: 18 },
+  tri: { fill: '#ffd8a8', fs: 16 },
+  hex: { fill: '#c5f6fa', fs: 18 },
+  para: { fill: '#ffc9c9', fs: 18 },
+  star: { fill: '#fff3a6', fs: 14 },
+  cyl: { fill: '#d3f9d8', fs: 18 },
+  arrowR: { fill: '#ffd8a8', fs: 18 },
+  speech: { fill: '#fcc2d7', fs: 18 },
+  sticky: { fill: '#fff3a6', fs: 18 },
+  text: { fill: 'transparent', fs: 24 }
+};
+/* When you restyle a shape's fill or font size, later shapes of that same type follow (this session only).
+   Other types keep their own built-in look. */
+const typeMemory = {};
+const defFor = (t, pristine) => ({
+  ...(TYPE_DEFAULTS[t] || { fill: def.fill, fs: def.fs }),
+  ...(pristine ? null : typeMemory[t])
+});
+const rememberStyle = (e, k, val) => {
+  if (!TYPE_DEFAULTS[e.t]) return false;
+  (typeMemory[e.t] = typeMemory[e.t] || {})[k] = val;
+  return true;
+};
 let els = [],
   sel = new Set(),
   cam = { x: 0, y: 0, z: 1 },
@@ -154,7 +184,8 @@ const ptrs = new Map();
 let route = 'boot', // 'boot' | 'home' | 'board' | 'share'
   board = null, // metadata of the open board: {id, name, created, updated, thumb, template, cam, count}
   readOnly = false,
-  hoverLock = null;
+  hoverLock = null,
+  HIDDEN = new Set(); // ids hidden inside collapsed mind-map branches (see mindmap.js)
 const isFrame = e => !!e && e.t === 'frame';
 /* frames first so they sit underneath everything else */
 const drawOrder = list => [...list.filter(isFrame), ...list.filter(e => !isFrame(e))];

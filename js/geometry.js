@@ -310,7 +310,7 @@ function shapeAt(p, skip, mm) {
   const m = (mm || 4) / cam.z;
   for (let i = els.length - 1; i >= 0; i--) {
     const e = els[i];
-    if (!isShape(e) || e.id === skip) continue;
+    if (!isShape(e) || e.id === skip || HIDDEN.has(e.id)) continue;
     if (p.x >= e.x - m && p.x <= e.x + e.w + m && p.y >= e.y - m && p.y <= e.y + e.h + m) return e;
   }
   return null;

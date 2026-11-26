@@ -117,7 +117,8 @@ body {
 #ui {
   pointer-events: none;
 }
-#ui [data-h] {
+#ui [data-h],
+#ui [data-cl] {
   pointer-events: auto;
 }
 #svg[data-tool='select'] [data-id] {

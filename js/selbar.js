@@ -16,7 +16,7 @@ function sbarUpdate() {
     key = line
       ? 'L' + one.route + one.head
       : one
-        ? 'S' + one.t
+        ? 'S' + one.t + (one.mm ? 'm' : '') + (one.cl ? 'c' : '') + (canCollapse() ? 'k' : '')
         : 'M' + S.length + (alignOK ? 'a' : '') + (selIsGroup() ? 'g' : selHasGroup() ? 'h' : '');
   if (key !== sbKey) {
     sbKey = key;
@@ -39,6 +39,17 @@ function sbarUpdate() {
           ? ''
           : SB('edit', 'edit', one.t === 'frame' ? 'Rename frame' : 'Edit text')) +
         SB('dup', 'dup', 'Duplicate') +
+        (mindEligible(one)
+          ? SB(
+              'mm',
+              'mindmap',
+              one.mm ? 'Mind map root (tap to remove)' : 'Make this a mind map root',
+              one.mm ? 'on' : ''
+            )
+          : '') +
+        (canCollapse()
+          ? SB('collapse', one.cl ? 'expand' : 'collapse', one.cl ? 'Expand branch' : 'Collapse branch')
+          : '') +
         SB('style', 'pal', 'Style', 'narrow sel-only') +
         '<span class="sep"></span>' +
         SB('del', 'del', 'Delete', 'danger');
@@ -121,6 +132,8 @@ $('#sbar').addEventListener('click', e => {
     if (document.body.classList.contains('panel-open')) document.body.classList.remove('panel-open');
     else openPanel();
   } else if (a === 'rev') reverse();
+  else if (a === 'mm') toggleMindRoot();
+  else if (a === 'collapse') toggleCollapse([...sel][0]);
   else if (a === 'group') groupSel();
   else if (a === 'ungroup') ungroupSel();
   else if (a === 'align') {

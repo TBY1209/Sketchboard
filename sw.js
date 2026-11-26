@@ -30,6 +30,7 @@ const PRECACHE = [
   'js/templates.js',
   'js/home.js',
   'js/power.js',
+  'js/mindmap.js',
   'js/palette.js',
   'js/share.js',
   'js/actions.js',
