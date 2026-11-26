@@ -14,7 +14,7 @@ A whiteboard and diagram app that lives in your browser. No account, no server, 
 **Mind maps**
 - Start from the Mind map template, or select any shape and press **Mind map root** in the selection bar. Add branches with the blue + dots
 - Branches style themselves by depth: the central idea is largest, each level is a little smaller (26 → 20 → 16 → 14 px), every main branch gets its own color and its sub-branches keep it
-- Fold a branch away with the **−** button on the node (or Ctrl/⌘ + /). A yellow **+N** badge shows how much is hidden. Collapsed state is saved with the board
+- Every node with branches has a small **›** arrow on the side where the branch grows. Press it to fold the branch away: the arrow turns to point outward and a small number shows how many items are hidden. Press it again to expand, and it turns back toward the node. Ctrl/⌘ + / does the same for the selected node. Folded state is saved with the board
 - Folded branches are still part of the node: moving, copying or deleting it takes the whole branch along. PNG, SVG and PDF show what you see; board files and share links keep everything
 
 **Drawing**

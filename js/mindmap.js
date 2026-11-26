@@ -116,48 +116,67 @@ function toggleMindRoot() {
   toast(
     was
       ? 'Mind map removed — everything is visible again'
-      : 'Mind map started. Add branches with the blue + dots, then collapse them with the − button.'
+      : 'Mind map started. Add branches with the blue + dots, and fold them with the small arrow beside a node.'
   );
 }
 
-/* ---------- on-canvas collapse buttons (drawn in the UI layer) ---------- */
+/* ---------- on-canvas fold arrow (drawn in the UI layer) ---------- */
+/* Which side of a node faces its branch: 'e' | 'w' | 'n' | 's' (east when the branch is centred, e.g. the root). */
+function mindSide(id) {
+  const m = MIND.get(id),
+    e = byId(id);
+  if (!m || !m.kids.length || !e) return null;
+  const c = ctr(e);
+  let dx = 0,
+    dy = 0;
+  for (const k of m.kids) {
+    const kc = ctr(byId(k));
+    dx += kc.x - c.x;
+    dy += kc.y - c.y;
+  }
+  if (Math.abs(dx) * e.h >= Math.abs(dy) * e.w) return dx < 0 ? 'w' : 'e';
+  return dy < 0 ? 'n' : 's';
+}
+/* unit vector out of the node, the rotation of a "›" drawn pointing east, and the opposite side */
+const SIDES = {
+  e: { ux: 1, uy: 0, rot: 0, opp: 'w' },
+  s: { ux: 0, uy: 1, rot: 90, opp: 'n' },
+  w: { ux: -1, uy: 0, rot: 180, opp: 'e' },
+  n: { ux: 0, uy: -1, rot: 270, opp: 's' }
+};
+/* Folded: the arrow points out, toward where the branch will appear (press to expand).
+   Expanded: it points back at the node (press to retract). A folded node also shows how many items are hidden. */
 function mindButtons() {
   if (!MIND.size || editing || (op && op.k !== 'pinch')) return '';
   const z = cam.z,
-    T = lastPT !== 'mouse';
+    T = lastPT !== 'mouse',
+    gap = 16, // screen px between the border and the arrow's centre
+    hit = T ? 22 : 17,
+    chevron = 'M-3.5 -7L3.5 0L-3.5 7';
   let s = '';
   for (const [id, m] of MIND) {
     if (!m.kids.length || HIDDEN.has(id)) continue;
-    const e = byId(id);
-    if (!e || !(e.cl || sel.has(id) || hoverId === id)) continue;
-    const b = bounds(e),
-      c = ctr(e);
-    let dx = 0,
-      dy = 0;
-    for (const k of m.kids) {
-      const kc = ctr(byId(k));
-      dx += kc.x - c.x;
-      dy += kc.y - c.y;
-    }
-    // sit on the edge that faces the branch (east when the branch is centred on the node)
-    const R = T ? 15 : 11,
-      out = (R * 0.55) / z; // pushed just outside the border so it never covers the label, yet still touches the node
-    let px = b.x + b.w + out,
-      py = b.y + b.h / 2;
-    if (Math.abs(dx) * b.h >= Math.abs(dy) * b.w) {
-      if (dx < 0) px = b.x - out;
-    } else {
-      px = b.x + b.w / 2;
-      py = dy < 0 ? b.y - out : b.y + b.h + out;
-    }
+    const e = byId(id),
+      side = mindSide(id);
+    if (!e || !side) continue;
+    const S = SIDES[side],
+      point = e.cl ? side : S.opp,
+      lit = e.cl || sel.has(id) || hoverId === id,
+      ex = side === 'e' ? e.x + e.w : side === 'w' ? e.x : e.x + e.w / 2,
+      ey = side === 'n' ? e.y : side === 's' ? e.y + e.h : e.y + e.h / 2,
+      px = ex + (S.ux * gap) / z,
+      py = ey + (S.uy * gap) / z;
+    let g = `<g data-cl="${id}" data-side="${side}" data-point="${point}" transform="translate(${r1(px)} ${r1(py)}) scale(${1 / z})" style="cursor:pointer;opacity:${lit ? 1 : 0.8}"><circle r="${hit}" fill="transparent"/>`;
     if (e.cl) {
+      // the count sits just beyond the arrow; the extra hit area keeps it clickable too
       const n = below(id).length,
-        label = '+' + n,
-        w = Math.max(R * 2, label.length * 8 + 14);
-      s += `<g data-cl="${id}" transform="translate(${r1(px)} ${r1(py)}) scale(${1 / z})" style="cursor:pointer"><rect x="${-w / 2 - 4}" y="${-R - 4}" width="${w + 8}" height="${R * 2 + 8}" rx="${R + 4}" fill="transparent"/><rect x="${-w / 2}" y="${-R}" width="${w}" height="${R * 2}" rx="${R}" style="fill:var(--acc);stroke:#1d1b24;stroke-width:1.5px"/><text y="4.5" text-anchor="middle" style="font:800 12.5px Figtree,system-ui,sans-serif;fill:#1d1b24">${label}</text></g>`;
-    } else {
-      s += `<g data-cl="${id}" transform="translate(${r1(px)} ${r1(py)}) scale(${1 / z})" style="cursor:pointer"><circle r="${R + 5}" fill="transparent"/><circle r="${R}" style="fill:var(--card);stroke:var(--sel);stroke-width:1.5px"/><path d="M-4.5 0H4.5" style="stroke:var(--ink);stroke-width:2px" stroke-linecap="round"/></g>`;
+        tx = side === 'e' ? 12 : side === 'w' ? -12 : 0,
+        ty = side === 'n' ? -11 : side === 's' ? 22 : 4.5,
+        anchor = side === 'e' ? 'start' : side === 'w' ? 'end' : 'middle';
+      g += `<circle cx="${S.ux * 18}" cy="${S.uy * 18}" r="${T ? 16 : 12}" fill="transparent"/><text x="${tx}" y="${ty}" text-anchor="${anchor}" style="font:800 12px Figtree,system-ui,sans-serif;fill:var(--ink);stroke:var(--bg);stroke-width:3.5px;paint-order:stroke;stroke-linejoin:round">${n}</text>`;
     }
+    g += `<circle r="10.5" style="fill:var(--bg)"/><g transform="rotate(${SIDES[point].rot})"><path d="${chevron}" fill="none" style="stroke:var(--bg);stroke-width:8px" stroke-linecap="round" stroke-linejoin="round"/><path d="${chevron}" fill="none" style="stroke:var(--ink);stroke-width:2.8px" stroke-linecap="round" stroke-linejoin="round"/></g></g>`;
+    s += g;
   }
   return s;
 }

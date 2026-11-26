@@ -174,12 +174,14 @@ function renderUI() {
       o = (T ? 40 : 24) / z,
       hr = (T ? 18 : 12) / z,
       vr = (T ? 9 : 7) / z,
-      c = ctr(e);
+      c = ctr(e),
+      ms = mindSide(e.id), // the fold arrow sits on this side, so its + dot moves out past it
+      ex = d => (ms === d ? (T ? 20 : 22) / z : 0);
     for (const [k, x, y] of [
-      ['c-n', c.x, e.y - o],
-      ['c-e', e.x + e.w + o, c.y],
-      ['c-s', c.x, e.y + e.h + o],
-      ['c-w', e.x - o, c.y]
+      ['c-n', c.x, e.y - o - ex('n')],
+      ['c-e', e.x + e.w + o + ex('e'), c.y],
+      ['c-s', c.x, e.y + e.h + o + ex('s')],
+      ['c-w', e.x - o - ex('w'), c.y]
     ])
       s += `<g data-h="${k}" style="cursor:crosshair"><circle cx="${x}" cy="${y}" r="${hr}" fill="transparent"/><circle cx="${x}" cy="${y}" r="${vr}" fill="var(--sel)"/><path d="M${x - vr * 0.5} ${y}H${x + vr * 0.5}M${x} ${y - vr * 0.5}V${y + vr * 0.5}" stroke="#fff" stroke-width="${1.6 / z}" stroke-linecap="round"/></g>`;
   }
